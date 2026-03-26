@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KB Bills — Invoice Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ef;
+  --surface: #ffffff;
+  --surface2: #faf8f5;
+  --border: #e4ddd4;
+  --border-light: #ede9e2;
+  --ink: #1c1812;
+  --ink-soft: #4a4340;
+  --ink-mute: #958d84;
+  --gold: #a07830;
+  --gold-mid: #c69a4a;
+  --gold-light: #f0e8d0;
+  --gold-pale: #faf6ec;
+  --green: #2a6b47;
+  --green-bg: #eaf4ee;
+  --red: #b83232;
+  --red-bg: #fdf0f0;
+  --blue: #2b5fa8;
+  --blue-bg: #eef3fc;
+  --shadow-sm: 0 1px 4px rgba(28,24,18,0.06);
+  --shadow-md: 0 4px 20px rgba(28,24,18,0.09);
+  --shadow-lg: 0 12px 48px rgba(28,24,18,0.13);
+  --r: 10px;
+  --r-sm: 6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;}
+a{color:var(--gold);}
+
+/* ===== HEADER ===== */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-sm);}
+.header-brand{display:flex;align-items:center;gap:11px;}
+.brand-icon{width:36px;height:36px;background:var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;color:white;font-size:17px;font-weight:700;letter-spacing:-0.5px;}
+.brand-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--ink);}
+.brand-sub{font-size:10.5px;color:var(--ink-mute);letter-spacing:0.2px;}
+.header-nav{display:flex;gap:3px;}
+.nav-btn{padding:7px 15px;border:none;background:transparent;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;transition:all 0.15s;}
+.nav-btn:hover,.nav-btn.active{background:var(--gold-pale);color:var(--gold);}
+.nav-btn.active{font-weight:600;}
+
+/* ===== LAYOUT ===== */
+.view{display:none;}
+.view.active{display:block;}
+.gen-layout{max-width:1180px;margin:0 auto;padding:24px 20px;display:grid;grid-template-columns:1fr 430px;gap:22px;align-items:start;}
+.track-layout{max-width:1180px;margin:0 auto;padding:24px 20px;}
+
+/* ===== CARDS ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.card-header{padding:13px 18px 12px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.card-title-badge{font-size:10px;background:var(--gold-light);color:var(--gold);padding:2px 7px;border-radius:12px;font-family:'Outfit',sans-serif;font-weight:600;}
+.card-body{padding:16px 18px;}
+
+/* ===== FORMS ===== */
+.form-group{margin-bottom:13px;}
+.form-group:last-child{margin-bottom:0;}
+.form-label{display:block;font-size:10.5px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:5px;}
+.form-control{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);transition:border-color 0.15s,box-shadow 0.15s;outline:none;}
+.form-control:focus{border-color:var(--gold-mid);box-shadow:0 0 0 3px rgba(160,120,48,0.1);}
+.form-control::placeholder{color:var(--ink-mute);}
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+
+/* ===== SEARCHABLE DROPDOWN (FIXED) ===== */
+.select-wrapper{position:relative;}
+.search-input-wrap{position:relative;}
+.search-icon-abs{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink-mute);font-size:13px;pointer-events:none;z-index:1;}
+.s-input{width:100%;padding:9px 36px 9px 32px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:13.5px;color:var(--ink);background:var(--surface);transition:border-color 0.15s,box-shadow 0.15s;outline:none;cursor:pointer;}
+.s-input:focus{border-color:var(--gold-mid);box-shadow:0 0 0 3px rgba(160,120,48,0.1);}
+.s-input::placeholder{color:var(--ink-mute);}
+.s-chevron{position:absolute;right:10px;top:50%;transform:translateY(-50%) rotate(0deg);color:var(--ink-mute);font-size:11px;pointer-events:none;transition:transform 0.2s;}
+.s-chevron.up{transform:translateY(-50%) rotate(180deg);}
+.dropdown-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-sm);box-shadow:var(--shadow-md);z-index:200;max-height:240px;overflow-y:auto;display:none;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+.dropdown-list::-webkit-scrollbar{width:5px;}
+.dropdown-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+.dropdown-list.open{display:block;}
+.drop-item{padding:9px 13px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;transition:background 0.1s;user-select:none;}
+.drop-item:last-child{border-bottom:none;}
+.drop-item:hover,.drop-item.highlighted{background:var(--gold-pale);}
+.drop-add-tag{font-size:10px;color:var(--gold);background:var(--gold-light);padding:2px 8px;border-radius:12px;font-weight:600;white-space:nowrap;flex-shrink:0;margin-left:8px;}
+.drop-no-results{padding:10px 13px;font-size:12.5px;color:var(--ink-mute);text-align:center;}
+
+/* ===== AMOUNT CHIPS ===== */
+.chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px;}
+.chip{padding:6px 13px;border:1.5px solid var(--border);border-radius:20px;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.15s;color:var(--ink-soft);background:var(--surface);white-space:nowrap;}
+.chip:hover{border-color:var(--gold-mid);color:var(--gold);}
+.chip.active{background:var(--gold);border-color:var(--gold);color:white;}
+.add-preset-row{display:flex;gap:7px;margin-top:7px;}
+.add-preset-row .form-control{font-size:13px;padding:7px 10px;}
+.add-preset-btn{padding:7px 13px;background:var(--gold-pale);border:1.5px solid var(--gold-light);border-radius:var(--r-sm);cursor:pointer;font-size:13px;color:var(--gold);font-weight:600;transition:all 0.15s;white-space:nowrap;}
+.add-preset-btn:hover{background:var(--gold);color:white;border-color:var(--gold);}
+
+/* ===== PREVIEW ===== */
+.preview-sticky{position:sticky;top:76px;}
+.preview-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);overflow:hidden;}
+.preview-inner{padding:22px;font-size:13px;}
+.inv-name{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--ink);}
+.inv-addr{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+.inv-pan{font-size:11px;color:var(--ink-mute);margin-top:2px;}
+.inv-divider{border:none;border-top:2px solid var(--gold-light);margin:12px 0;}
+.inv-meta-bar{display:flex;justify-content:space-between;font-size:11.5px;}
+.inv-meta-label{color:var(--ink-mute);}
+.inv-meta-value{font-weight:600;color:var(--ink);}
+.inv-title-badge{text-align:center;font-family:'Cormorant Garamond',serif;font-size:12px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin:14px 0 12px;padding:7px;border:1px solid var(--gold-light);background:var(--gold-pale);border-radius:4px;}
+.inv-to-block{margin-bottom:12px;}
+.inv-to-label{font-size:10px;color:var(--ink-mute);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;}
+.inv-to-name{font-size:14px;font-weight:600;color:var(--ink);margin-top:2px;}
+.inv-body{font-size:11px;color:var(--ink-soft);line-height:1.75;margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:5px;border-left:3px solid var(--gold-light);}
+.inv-table{width:100%;border-collapse:collapse;margin-bottom:6px;}
+.inv-table th{background:var(--ink);color:white;padding:7px 10px;font-size:11px;font-weight:600;letter-spacing:0.4px;text-align:left;text-transform:uppercase;}
+.inv-table th:last-child{text-align:right;}
+.inv-table td{padding:9px 10px;font-size:12px;border-bottom:1px solid var(--border-light);color:var(--ink-soft);}
+.inv-table td:last-child{text-align:right;font-weight:600;color:var(--ink);}
+.inv-table .tot-row td{background:var(--gold-pale);font-weight:700;color:var(--ink);border-bottom:none;font-size:13px;}
+.inv-words{font-size:10.5px;color:var(--ink-mute);font-style:italic;margin-top:4px;padding:4px 9px;background:var(--bg);border-radius:4px;}
+.inv-bank{margin-top:11px;padding:9px 12px;background:var(--blue-bg);border-radius:5px;font-size:10.5px;color:var(--blue);border-left:3px solid var(--blue);}
+.inv-sig{text-align:right;margin-top:16px;padding-top:10px;border-top:1px solid var(--border-light);font-size:11px;color:var(--ink-mute);}
+.inv-sig strong{display:block;font-size:12px;color:var(--ink);font-family:'Cormorant Garamond',serif;margin-top:1px;}
+.preview-actions{display:flex;gap:8px;padding:13px 16px;border-top:1px solid var(--border-light);background:var(--surface2);}
+
+/* ===== BUTTONS ===== */
+.btn{flex:1;padding:9px 13px;border:none;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-primary{background:var(--ink);color:white;}
+.btn-primary:hover{background:#3a3530;transform:translateY(-1px);}
+.btn-secondary{background:var(--surface);color:var(--ink);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--gold-mid);color:var(--gold);}
+.btn-gold{background:var(--gold);color:white;}
+.btn-gold:hover{background:#8a6528;transform:translateY(-1px);box-shadow:0 4px 16px rgba(160,120,48,0.28);}
+.btn-green{background:var(--green);color:white;}
+.btn-green:hover{background:#1f5337;transform:translateY(-1px);}
+.btn-sm{padding:6px 11px;font-size:12px;}
+
+/* ===== TRACKER STATS ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:20px;}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 17px;box-shadow:var(--shadow-sm);}
+.stat-label{font-size:10.5px;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;font-weight:600;}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;margin-top:3px;line-height:1.1;}
+.stat-val.gold{color:var(--gold);}
+.stat-val.green{color:var(--green);}
+.stat-val.red{color:var(--red);}
+.stat-sub{font-size:10.5px;color:var(--ink-mute);margin-top:2px;}
+
+/* ===== TRACKER TABLE ===== */
+.tracker-top{display:flex;gap:11px;margin-bottom:13px;align-items:center;}
+.search-wrap{position:relative;flex:1;}
+.track-search{width:100%;padding:10px 14px 10px 36px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:13.5px;background:var(--surface);outline:none;transition:border-color 0.15s;}
+.track-search:focus{border-color:var(--gold-mid);box-shadow:0 0 0 3px rgba(160,120,48,0.1);}
+.track-search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--ink-mute);pointer-events:none;}
+.filter-row{display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap;}
+.f-tab{padding:6px 13px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:var(--surface);color:var(--ink-soft);transition:all 0.15s;}
+.f-tab:hover,.f-tab.active{border-color:var(--gold-mid);color:var(--gold);background:var(--gold-pale);}
+.sort-btn{padding:7px 12px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-size:12px;background:var(--surface);cursor:pointer;color:var(--ink-soft);transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.sort-btn:hover{border-color:var(--gold-mid);color:var(--gold);}
+.inv-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-sm);}
+.t-header{display:grid;grid-template-columns:62px 1.8fr 1.5fr 90px 100px 90px 110px 52px;padding:9px 15px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10.5px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.6px;}
+.t-row{display:grid;grid-template-columns:62px 1.8fr 1.5fr 90px 100px 90px 110px 52px;padding:11px 15px;border-bottom:1px solid var(--border-light);align-items:center;transition:background 0.1s;cursor:default;}
+.t-row:last-child{border-bottom:none;}
+.t-row:hover{background:var(--gold-pale);}
+.t-inv-no{font-weight:700;font-size:12px;color:var(--gold);}
+.t-company{font-size:12.5px;font-weight:500;color:var(--ink);}
+.t-part{font-size:11.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-date{font-size:12px;color:var(--ink-soft);}
+.t-amt{font-size:13px;font-weight:700;color:var(--ink);}
+.toggle-btn{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background 0.2s;border:none;outline:none;flex-shrink:0;}
+.toggle-btn::after{content:'';position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:3px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.toggle-btn.on{background:var(--green);}
+.toggle-btn.on::after{transform:translateX(16px);}
+.status-cell{display:flex;align-items:center;gap:7px;}
+.s-text{font-size:11px;font-weight:500;}
+.s-text.paid{color:var(--green);}
+.s-text.unpaid{color:var(--gold);}
+.days-badge{font-size:10.5px;padding:2px 7px;background:var(--green-bg);color:var(--green);border-radius:12px;font-weight:600;display:inline-block;}
+.days-badge.late{background:var(--red-bg);color:var(--red);}
+.row-action{display:flex;gap:5px;justify-content:flex-end;}
+.row-btn{padding:4px 9px;border:1.5px solid var(--border);border-radius:4px;font-size:11px;cursor:pointer;background:var(--surface);color:var(--ink-soft);transition:all 0.15s;font-family:'Outfit',sans-serif;}
+.row-btn:hover{border-color:var(--gold-mid);color:var(--gold);}
+.empty-state{text-align:center;padding:52px 20px;color:var(--ink-mute);}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(28,24,18,0.35);z-index:300;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:26px;width:420px;max-width:95vw;border:1px solid var(--border);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:16px;color:var(--ink);}
+.modal-actions{display:flex;gap:9px;margin-top:17px;}
+.modal-actions .btn{flex:none;padding:9px 18px;}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:white;padding:11px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:500;box-shadow:var(--shadow-lg);z-index:500;transform:translateY(100px);opacity:0;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.green{background:var(--green);}
+.toast.gold{background:var(--gold);}
+
+/* ===== EXPORT STRIP ===== */
+.export-strip{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;box-shadow:var(--shadow-sm);}
+.export-label{font-size:12.5px;color:var(--ink-soft);font-weight:500;}
+.export-btns{display:flex;gap:8px;}
+
+/* ===== PRINT ===== */
+@media print{body *{visibility:hidden;}#printArea,#printArea *{visibility:visible;}#printArea{position:fixed;left:0;top:0;width:100%;padding:36px;background:white;font-size:13px;}}
+@media(max-width:900px){.gen-layout{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}.t-header,.t-row{grid-template-columns:55px 1fr 85px 85px 50px;}.t-header>*:nth-child(3),.t-row>*:nth-child(3),.t-header>*:nth-child(7),.t-row>*:nth-child(7){display:none;}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-icon">KB</div>
+    <div>
+      <div class="brand-name">KB Bills</div>
+      <div class="brand-sub">KASHMIRA RAKESH BHANGE · Professional Invoicing</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn active" id="navGen" onclick="switchView('gen')">✦ New Invoice</button>
+    <button class="nav-btn" id="navTrack" onclick="switchView('track')">⊟ All Invoices</button>
+  </nav>
+</header>
+
+<!-- ===== GENERATOR VIEW ===== -->
+<div class="view active" id="viewGen">
+  <div class="gen-layout">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- TO SECTION -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📌 To (Client) <span class="card-title-badge">Searchable</span></div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Select or Search Client</label>
+            <div class="select-wrapper" id="swTo">
+              <div class="search-input-wrap">
+                <span class="search-icon-abs">🔍</span>
+                <input type="text" class="s-input" id="toInput" placeholder="Type to search client…" autocomplete="off"
+                  oninput="filterDrop('to')" onclick="openDrop('to')" onkeydown="dropKey(event,'to')">
+                <span class="s-chevron" id="toChev">▼</span>
+              </div>
+              <div class="dropdown-list" id="toDrop"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Add New Client</label>
+            <div class="add-preset-row">
+              <input type="text" class="form-control" id="newClientIn" placeholder="Enter new client name…" style="font-size:13px;padding:7px 10px;">
+              <button class="add-preset-btn" onclick="addNewItem('to')">+ Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARTICULARS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📝 Particulars <span class="card-title-badge">Searchable</span></div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Select or Type Service Description</label>
+            <div class="select-wrapper" id="swPart">
+              <div class="search-input-wrap">
+                <span class="search-icon-abs">🔍</span>
+                <input type="text" class="s-input" id="partInput" placeholder="Type to search service…" autocomplete="off"
+                  oninput="filterDrop('part')" onclick="openDrop('part')" onkeydown="dropKey(event,'part')">
+                <span class="s-chevron" id="partChev">▼</span>
+              </div>
+              <div class="dropdown-list" id="partDrop"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Add New Particular</label>
+            <div class="add-preset-row">
+              <input type="text" class="form-control" id="newPartIn" placeholder="Enter new service description…" style="font-size:13px;padding:7px 10px;">
+              <button class="add-preset-btn" onclick="addNewItem('part')">+ Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AMOUNT -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">₹ Amount</div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label class="form-label">Quick Select</label>
+            <div class="chips-wrap" id="amountChips"></div>
+            <div class="add-preset-row">
+              <input type="number" class="form-control" id="newAmtIn" placeholder="Add custom preset amount…" style="font-size:13px;padding:7px 10px;" min="1">
+              <button class="add-preset-btn" onclick="addPreset()">+ Preset</button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:12px;">
+            <label class="form-label">Enter Amount (₹)</label>
+            <input type="number" class="form-control" id="amtInput" placeholder="0" min="1" oninput="onAmt(this.value)" style="font-size:16px;font-weight:600;">
+          </div>
+        </div>
+      </div>
+
+      <!-- INVOICE META -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🗓 Invoice Details</div>
+        </div>
+        <div class="card-body">
+          <div class="meta-row">
+            <div class="form-group">
+              <label class="form-label">Invoice No.</label>
+              <input type="text" class="form-control" id="invNo" value="TCP/2025-26/KB 38" oninput="updatePreview()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" id="invDate" oninput="updatePreview()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN — PREVIEW -->
+    <div class="preview-sticky">
+      <div class="preview-card">
+        <div class="card-header" style="background:var(--surface2);">
+          <div class="card-title">👁 Live Preview</div>
+          <span style="font-size:11px;color:var(--ink-mute);">Auto-updates</span>
+        </div>
+        <div class="preview-inner" id="printArea">
+          <div class="inv-name">KASHMIRA RAKESH BHANGE</div>
+          <div class="inv-addr">3, Manewada Besa Road, Nagpur-440027</div>
+          <div class="inv-pan">Income Tax Permanent Account No. DEMPB8933J</div>
+          <hr class="inv-divider">
+          <div class="inv-meta-bar">
+            <div><span class="inv-meta-label">Invoice No: </span><span class="inv-meta-value" id="prevNo">—</span></div>
+            <div><span class="inv-meta-label">Date: </span><span class="inv-meta-value" id="prevDate">—</span></div>
+          </div>
+          <div class="inv-title-badge">MEMORANDUM OF FEES</div>
+          <div class="inv-to-block">
+            <div class="inv-to-label">To,</div>
+            <div class="inv-to-name" id="prevTo">—</div>
+          </div>
+          <div class="inv-body">Dear Sirs, We append hereto note of our professional fees towards charges for various professional / certification services and shall be obliged if you could arrange to send us your local Cheque at the earliest.</div>
+          <table class="inv-table">
+            <thead><tr><th>Particulars</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
+            <tbody>
+              <tr><td id="prevPart">—</td><td id="prevAmt" style="text-align:right;">—</td></tr>
+              <tr class="tot-row"><td><strong>TOTAL</strong></td><td id="prevTotal" style="text-align:right;">—</td></tr>
+            </tbody>
+          </table>
+          <div class="inv-words" id="prevWords">Amount in words will appear here.</div>
+          <div class="inv-bank">🏦 HDFC Bank, Dhantoli Branch · A/c: 50100208732312 · IFSC: HDFC0001009<br>Pay in Name of: <strong>KASHMIRA RAKESH BHANGE</strong></div>
+          <div class="inv-sig">S/d—<strong>Authorised Signatory</strong><div style="margin-top:2px;font-size:10px;">For Kashmira Rakesh Bhange</div></div>
+        </div>
+        <div class="preview-actions">
+          <button class="btn btn-secondary btn-sm" onclick="copyText()">⎘ Copy</button>
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">⎙ Print</button>
+          <button class="btn btn-gold btn-sm" onclick="dlExcel()">⬇ Excel</button>
+          <button class="btn btn-primary btn-sm" onclick="saveInv()">✔ Save</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== TRACKER VIEW ===== -->
+<div class="view" id="viewTrack">
+  <div class="track-layout">
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="export-strip">
+      <span class="export-label">📊 Export your records</span>
+      <div class="export-btns">
+        <button class="btn btn-secondary btn-sm" onclick="exportAllCSV()">⬇ Export CSV</button>
+        <button class="btn btn-gold btn-sm" onclick="exportAllExcel()">⬇ Export Excel (All Bills)</button>
+      </div>
+    </div>
+
+    <div class="tracker-top">
+      <div class="search-wrap">
+        <span class="track-search-icon">🔍</span>
+        <input class="track-search" id="tSearch" placeholder="Search by company, invoice no, amount, particulars…" oninput="renderRows()">
+      </div>
+      <select class="form-control" id="sortSel" style="width:160px;font-size:12.5px;padding:9px 10px;" onchange="renderRows()">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="amt-desc">Highest Amount</option>
+        <option value="amt-asc">Lowest Amount</option>
+        <option value="alpha">A–Z Company</option>
+      </select>
+    </div>
+
+    <div class="filter-row">
+      <button class="f-tab active" onclick="setF('all',this)">All</button>
+      <button class="f-tab" onclick="setF('unpaid',this)">Unpaid</button>
+      <button class="f-tab" onclick="setF('paid',this)">Paid</button>
+      <button class="f-tab" onclick="setF('overdue',this)">Overdue (30d+)</button>
+    </div>
+
+    <div class="inv-table-wrap">
+      <div class="t-header">
+        <div>Inv No</div>
+        <div>Company</div>
+        <div>Particulars</div>
+        <div>Date</div>
+        <div>Amount</div>
+        <div>Status</div>
+        <div>Days / Paid On</div>
+        <div>Action</div>
+      </div>
+      <div id="tBody"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div class="modal-overlay" id="mOverlay">
+  <div class="modal">
+    <div class="modal-title" id="mTitle">Record Payment</div>
+    <div class="form-group">
+      <label class="form-label">Payment Received Date</label>
+      <input type="date" class="form-control" id="mDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Payment Method (Optional)</label>
+      <select class="form-control" id="mMethod">
+        <option value="">— Select —</option>
+        <option>Cheque</option>
+        <option>NEFT/RTGS</option>
+        <option>UPI</option>
+        <option>Cash</option>
+        <option>DD</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reference No. (Optional)</label>
+      <input type="text" class="form-control" id="mRef" placeholder="UTR / Cheque No.…">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeM()">Cancel</button>
+      <button class="btn btn-green" onclick="confirmM()">✔ Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- SERVER HELP MODAL -->
+<div id="srvModal" style="display:none;position:fixed;inset:0;background:rgba(28,24,18,0.45);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+  <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:28px;width:500px;max-width:95vw;border:1px solid var(--border);">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:6px;">⚡ One-Time Setup Required</div>
+    <div style="font-size:12px;color:var(--ink-mute);margin-bottom:18px;">To download perfectly formatted Excel (bold, centered, proper fonts), run the KB server once on your Mac.</div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">Step 1 — Open Terminal on your Mac and run:</div>
+      <code style="display:block;background:#1c1812;color:#e8d8b0;padding:10px 13px;border-radius:5px;font-size:12.5px;letter-spacing:0.3px;">pip3 install openpyxl<br>python3 kb_server.py</code>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:18px;">
+      <div style="font-size:11px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">Step 2 — Keep that Terminal window open, then click ⬇ Excel again</div>
+      <div style="font-size:12px;color:var(--ink-soft);">The server runs silently in the background. Your Excel files will now have:<br>✔ Bold headers &amp; centered name · ✔ Cambria font · ✔ Proper table borders · ✔ Merged cells · ✔ Exact column widths</div>
+    </div>
+    <div style="font-size:11.5px;color:var(--ink-mute);margin-bottom:16px;">📁 Keep <strong>kb_server.py</strong> in the same folder as this HTML file. Download it below if needed.</div>
+    <div style="display:flex;gap:9px;">
+      <button class="btn btn-secondary" style="flex:none;padding:9px 16px;font-size:13px;" onclick="document.getElementById('srvModal').style.display='none'">Close</button>
+      <button class="btn btn-gold" style="flex:none;padding:9px 16px;font-size:13px;" onclick="downloadServerScript()">⬇ Download kb_server.py</button>
+      <button class="btn btn-primary" style="flex:none;padding:9px 16px;font-size:13px;" onclick="document.getElementById('srvModal').style.display='none';dlExcel()">🔄 Retry Excel Download</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ============================================================
+// DATA
+// ============================================================
+let clients = [
+  "BRIOTA TECHNOLOGIES PRIVATE LIMITED","EROS METAL WORKS PRIVATE LIMITED",
+  "MBP FINANCE AND INVESTMENTS PRIVATE LIMITED","DESHMUKH TRADING PRIVATE LIMITED",
+  "BAGARIA TIMBER PRIVATE LIMITED","SUNIL MISRA","ALL INDIA JEWELLERS AND GOLDSMITH FEDERATION",
+  "PRABHJEET SINGH TULI","EROS INDUSTRIES","MAXELS TEKVENTURES PRIVATE LIMITED",
+  "BIDYUT ENERGIAA","CENTRAL INDIA MINING AND MARKETING CORPORATION","FINTECHOPS PRIVATE LIMITED",
+  "VIGOUR METALS AND ALLOYS","TULI TIGER CORRIDOR","MBP CORPOSOLUTIONS LLP",
+  "BIJLEE LED LIGHTING PVT LTD","Mr. Armaan Tuli","Bartech Data Systems Ltd","Mr. Kamlesh Dadhe",
+  "NEXT TRACK ENGINEERING PRIVATE LIMITED","EROS INFRASTRUCTURES PRIVATE LIMITED",
+  "MR. AVINASH PANDE","MR. AKHIL PANDE","PRINCIPAL DMS NABIRA MAHAVIDYALAY",
+  "BHAGYASHRI HOME APPLIANCES PRIVATE LIMITED","FLYPBOX TECHNOLOGIES PRIVATE LIMITED",
+  "NAG VIDARBHA CHAMBER OF COMMERCE","MR MANISH JEJANI","PEGS CONSULTING LLP",
+  "MR HUSSAIN NOORALLAH AJANI","SATYAKIRAN COOLERS STEEL AND FURNITURE PRIVATE LIMITED",
+  "VASUDHA WOODLESS CREMATION FOUNDATION"
+];
+
+let partList = [
+  "Towards Class 3 DSC Charges","Towards Class 3 Combo DSC Charges",
+  "Towards Challan for Dir 3 KYC form",
+  "Towards Reimbursement of expenses for conversion of Company from Pvt Ltd to Public Limited",
+  "Towards Financial Finalisation for year ended 2025","Towards KYC and Class 3 DSC Charges",
+  "Towards Professional Fees for Income Tax Filing","Towards GST Return Filing Charges",
+  "Towards ROC Filing Charges","Towards Annual Compliance Charges",
+  "Towards DIR-3 KYC Filing Charges","Towards DIN Activation Charges"
+];
+
+let presets = [1050,2000,2250,2500,3250,5000,5500,6500,6600,10000];
+
+let invoices = [
+  {id:'KB01',no:'KB 01',date:'04.04.2025',to:'BRIOTA TECHNOLOGIES PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Miss. Vaibhavi Dattaraj Sakhare',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB02',no:'KB 02',date:'04.04.2025',to:'EROS METAL WORKS PRIVATE LIMITED',part:'Towards Class 3 Combo DSC of EMPL (Amitkumar Pande)',amt:5500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB03',no:'KB 03',date:'09.04.2025',to:'MBP FINANCE AND INVESTMENTS PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Atulkumar Narainprasad Pande',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB04',no:'KB 04',date:'13.05.2025',to:'DESHMUKH TRADING PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Bhushan Prabhakar Deshmukh',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB05',no:'KB 05',date:'13.05.2025',to:'BAGARIA TIMBER PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Ashok Kumar Bagaria',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB06',no:'KB 06',date:'28.05.2025',to:'SUNIL MISRA',part:'Towards Class 3 DSC Charges of Mr. Sunil Misra',amt:6600,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB07',no:'KB 07',date:'29.05.2025',to:'MBP FINANCE AND INVESTMENTS PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Amitkumar Narayanprasad Pande',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB08',no:'KB 08',date:'29.05.2025',to:'ALL INDIA JEWELLERS AND GOLDSMITH FEDERATION',part:'Towards Class 3 DSC Charges of Mr. Pankaj Arora',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB09',no:'KB 09',date:'02.06.2025',to:'PRABHJEET SINGH TULI',part:'Towards Class 3 DSC Charges of Mr. Prabhjeet Singh Tuli',amt:3250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB10',no:'KB 010',date:'13.06.2025',to:'EROS INDUSTRIES',part:'Towards Class 3 Combo DSC of Eros Industries (Amitkumar Pande)',amt:5500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB11',no:'KB 11',date:'14.06.2025',to:'MAXELS TEKVENTURES PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mrs. Aparna Balagopal',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB12',no:'KB 12',date:'21.07.2025',to:'BIDYUT ENERGIAA',part:'Towards Class 3 Combo DSC of BIDYUT ENERGIAA (Mr. Shiv Sial)',amt:6500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB13',no:'KB 13',date:'21.07.2025',to:'CENTRAL INDIA MINING AND MARKETING CORPORATION',part:'Towards Class 3 Combo DSC of CIMMC (Mr. Naushad Bhagwagar)',amt:6500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB14',no:'KB 14',date:'23.07.2025',to:'FINTECHOPS PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Renu Jeswani',amt:1050,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB15',no:'KB 15',date:'23.07.2025',to:'VIGOUR METALS AND ALLOYS',part:'Towards Class 3 Combo DSC of VIGOUR METALS AND ALLOYS (Mr. Kartik Trivedi)',amt:6500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB16',no:'KB 16',date:'04.09.2025',to:'VIGOUR METALS AND ALLOYS',part:'Towards Class 3 DSC Charges of MR. GAGAN SIAL',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB17',no:'KB 17',date:'12.09.2025',to:'TULI TIGER CORRIDOR',part:'Towards Class 3 DSC Charges of MR. PRABHJEETSINGH TULI',amt:3250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB18',no:'KB 18',date:'15.09.2025',to:'MBP CORPOSOLUTIONS LLP',part:'Towards Class 3 DSC Charges of Multiple Directors (2250×7)',amt:15750,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB19',no:'KB 19',date:'01.10.2025',to:'BIJLEE LED LIGHTING PVT LTD',part:'Towards Class 3 Combo DSC of BIJLEE LED LIGHTING PVT LTD (MR. SHIV SIAL)',amt:6500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB20',no:'KB 20',date:'10.10.2025',to:'Mr. Armaan Tuli',part:'Towards KYC and Class 3 DSC Charges of MR. ARMAAN TULI',amt:8250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB21',no:'KB 21',date:'28.10.2025',to:'Bartech Data Systems Ltd',part:'Towards Reimbursement of expenses for conversion from Pvt Ltd to Public Limited',amt:45000,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB22',no:'KB 22',date:'07.11.2025',to:'Mr. Kamlesh Dadhe',part:'Towards Class 3 DSC Charges of Kamlesh Dadhe',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB23',no:'KB 23',date:'07.11.2025',to:'NEXT TRACK ENGINEERING PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mrs. Aishwarya Nair',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB24',no:'KB 24',date:'14.11.2025',to:'EROS INFRASTRUCTURES PRIVATE LIMITED',part:'Towards Class 3 Combo DSC of Mr. Amit Pande',amt:6500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB25',no:'KB 25',date:'14.11.2025',to:'MR. AVINASH PANDE',part:'Towards Class 3 DSC Charges of Mr. Avinash Pande',amt:2500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB26',no:'KB 26',date:'14.11.2025',to:'MR. AKHIL PANDE',part:'Towards Class 3 DSC Charges of Mr. Akhil Pande',amt:2500,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB27',no:'KB 27',date:'02.01.2026',to:'PRINCIPAL DMS NABIRA MAHAVIDYALAY',part:'Towards Class 3 DSC Charges of Mr. SUNIL KUMAR NAVIN',amt:2000,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB28',no:'KB 28',date:'09.02.2026',to:'BHAGYASHRI HOME APPLIANCES PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Hemant Bhave',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB29',no:'KB 29',date:'12.02.2026',to:'FLYPBOX TECHNOLOGIES PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Mr. Devaulapalli Venkata Koushik',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB30',no:'KB 30',date:'12.02.2026',to:'NAG VIDARBHA CHAMBER OF COMMERCE',part:'Towards Class 3 DSC Charges of Mr. Hussain Ajani',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB31',no:'KB 31',date:'14.02.2026',to:'MR MANISH JEJANI',part:'Towards Challan for Dir 3 KYC form',amt:5000,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB32',no:'KB 32',date:'16.02.2026',to:'PEGS CONSULTING LLP',part:'Towards Class 3 DSC Charges of Mr. Ashutosh Sathe',amt:2250,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB33',no:'KB 33',date:'17.02.2026',to:'MR HUSSAIN NOORALLAH AJANI',part:'Towards Challan for Dir 3 KYC form',amt:5000,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB34',no:'KB 34',date:'17.02.2026',to:'SATYAKIRAN COOLERS STEEL AND FURNITURE PRIVATE LIMITED',part:'Towards Financial Finalisation for year ended 2025',amt:20000,paid:false,paidDate:null,method:'',ref:''},
+  {id:'KB35',no:'KB 35',date:'17.02.2026',to:'VASUDHA WOODLESS CREMATION FOUNDATION',part:'Towards Class 3 DSC Charges of Prashant Hartalkar Sir',amt:2250,paid:false,paidDate:null,method:'',ref:''}
+];
+
+let curFilter='all', pendId=null, dropFocus={to:-1,part:-1};
+
+// ============================================================
+// INIT
+// ============================================================
+window.onload = () => {
+  renderChips();
+  document.getElementById('invDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('invNo').value = 'TCP/2025-26/KB ' + (invoices.length + 1);
+  updatePreview();
+  // Close dropdowns on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#swTo')) closeDrop('to');
+    if (!e.target.closest('#swPart')) closeDrop('part');
+  });
+};
+
+// ============================================================
+// CHIPS
+// ============================================================
+function renderChips(){
+  document.getElementById('amountChips').innerHTML = presets.map(a =>
+    `<button class="chip" id="chip${a}" onclick="selAmt(${a})">₹${a.toLocaleString('en-IN')}</button>`
+  ).join('');
+}
+function selAmt(v){
+  document.getElementById('amtInput').value = v;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  const c = document.getElementById('chip'+v);
+  if(c) c.classList.add('active');
+  updatePreview();
+}
+function onAmt(v){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  const c = document.getElementById('chip'+v);
+  if(c) c.classList.add('active');
+  updatePreview();
+}
+function addPreset(){
+  const v = parseInt(document.getElementById('newAmtIn').value);
+  if(!v || v <= 0){ showToast('Enter a valid amount'); return; }
+  if(presets.includes(v)){ showToast('Preset already exists'); return; }
+  presets.push(v); presets.sort((a,b)=>a-b);
+  document.getElementById('newAmtIn').value = '';
+  renderChips();
+  showToast('✔ Preset ₹'+v.toLocaleString('en-IN')+' added', 'gold');
+}
+
+// ============================================================
+// DROPDOWN — FULLY FIXED
+// ============================================================
+function getList(t){ return t==='to' ? clients : partList; }
+function getInputEl(t){ return document.getElementById(t==='to'?'toInput':'partInput'); }
+function getDropEl(t){ return document.getElementById(t==='to'?'toDrop':'partDrop'); }
+function getChevEl(t){ return document.getElementById(t==='to'?'toChev':'partChev'); }
+
+function buildDropHTML(t){
+  const list = getList(t);
+  const q = getInputEl(t).value.toLowerCase().trim();
+  const filtered = q ? list.filter(x => x.toLowerCase().includes(q)) : list;
+  let html = '';
+  filtered.forEach((x, i) => {
+    const hl = q ? x.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<strong>$1</strong>') : x;
+    html += `<div class="drop-item" data-val="${x.replace(/"/g,'&quot;')}" onclick="selDrop('${t}','${x.replace(/'/g,"\\'")}',event)">${hl}</div>`;
+  });
+  const raw = getInputEl(t).value.trim();
+  if(raw && !list.some(x => x.toLowerCase() === raw.toLowerCase())){
+    html += `<div class="drop-item" onclick="addSelDrop('${t}','${raw.replace(/'/g,"\\'")}',event)">
+      <span>${raw}</span><span class="drop-add-tag">+ Add New</span>
+    </div>`;
+  }
+  if(!html) html = `<div class="drop-no-results">No results — type to add new</div>`;
+  return html;
+}
+
+function openDrop(t){
+  const el = getDropEl(t);
+  el.innerHTML = buildDropHTML(t);
+  el.classList.add('open');
+  getChevEl(t).classList.add('up');
+  dropFocus[t] = -1;
+}
+function closeDrop(t){
+  getDropEl(t).classList.remove('open');
+  getChevEl(t).classList.remove('up');
+}
+function filterDrop(t){
+  const el = getDropEl(t);
+  el.innerHTML = buildDropHTML(t);
+  el.classList.add('open');
+  getChevEl(t).classList.add('up');
+  updatePreview();
+}
+function selDrop(t, v, e){
+  if(e) e.stopPropagation();
+  getInputEl(t).value = v;
+  closeDrop(t);
+  updatePreview();
+}
+function addSelDrop(t, v, e){
+  if(e) e.stopPropagation();
+  if(t==='to'){ if(!clients.includes(v)) clients.push(v); showToast('✔ Client added!','gold'); }
+  else { if(!partList.includes(v)) partList.push(v); showToast('✔ Particular added!','gold'); }
+  getInputEl(t).value = v;
+  closeDrop(t);
+  updatePreview();
+}
+function addNewItem(t){
+  const inEl = document.getElementById(t==='to'?'newClientIn':'newPartIn');
+  const v = inEl.value.trim();
+  if(!v){ showToast('Enter a value first'); return; }
+  if(t==='to'){
+    if(!clients.includes(v)){ clients.push(v); showToast('✔ Client "'+v+'" added','gold'); }
+    else showToast('Client already exists');
+    document.getElementById('toInput').value = v;
+  } else {
+    if(!partList.includes(v)){ partList.push(v); showToast('✔ Particular added','gold'); }
+    else showToast('Already in list');
+    document.getElementById('partInput').value = v;
+  }
+  inEl.value = '';
+  updatePreview();
+}
+
+// Keyboard navigation in dropdown
+function dropKey(e, t){
+  const el = getDropEl(t);
+  const items = el.querySelectorAll('.drop-item');
+  if(!el.classList.contains('open')){ openDrop(t); return; }
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    dropFocus[t] = Math.min(dropFocus[t]+1, items.length-1);
+    items.forEach((i,idx)=>i.classList.toggle('highlighted', idx===dropFocus[t]));
+    if(items[dropFocus[t]]) items[dropFocus[t]].scrollIntoView({block:'nearest'});
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    dropFocus[t] = Math.max(dropFocus[t]-1, 0);
+    items.forEach((i,idx)=>i.classList.toggle('highlighted', idx===dropFocus[t]));
+    if(items[dropFocus[t]]) items[dropFocus[t]].scrollIntoView({block:'nearest'});
+  } else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(dropFocus[t] >= 0 && items[dropFocus[t]]) items[dropFocus[t]].click();
+    else closeDrop(t);
+  } else if(e.key === 'Escape'){
+    closeDrop(t);
+  }
+}
+
+// ============================================================
+// PREVIEW
+// ============================================================
+function updatePreview(){
+  const to   = document.getElementById('toInput').value.trim() || '—';
+  const part = document.getElementById('partInput').value.trim() || '—';
+  const amt  = parseFloat(document.getElementById('amtInput').value) || 0;
+  const no   = document.getElementById('invNo').value.trim() || '—';
+  const dv   = document.getElementById('invDate').value;
+  document.getElementById('prevNo').textContent    = no;
+  document.getElementById('prevDate').textContent  = dv ? fmtDate(dv) : '—';
+  document.getElementById('prevTo').textContent    = to;
+  document.getElementById('prevPart').textContent  = part;
+  document.getElementById('prevAmt').textContent   = amt ? '₹'+amt.toLocaleString('en-IN') : '—';
+  document.getElementById('prevTotal').textContent = amt ? '₹'+amt.toLocaleString('en-IN') : '—';
+  document.getElementById('prevWords').textContent = amt ? '('+n2w(amt)+')' : 'Amount in words will appear here.';
+}
+function fmtDate(s){
+  const d = new Date(s);
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+}
+
+// ============================================================
+// SAVE INVOICE
+// ============================================================
+function saveInv(){
+  const to   = document.getElementById('toInput').value.trim();
+  const part = document.getElementById('partInput').value.trim();
+  const amt  = parseFloat(document.getElementById('amtInput').value);
+  const no   = document.getElementById('invNo').value.trim();
+  const dv   = document.getElementById('invDate').value;
+  if(!to)  { showToast('⚠ Select or enter a client'); return; }
+  if(!part){ showToast('⚠ Enter particulars'); return; }
+  if(!amt) { showToast('⚠ Enter an amount'); return; }
+  if(!no)  { showToast('⚠ Enter invoice number'); return; }
+  if(!dv)  { showToast('⚠ Select a date'); return; }
+  invoices.push({id:'KB'+Date.now(),no:no,date:fmtDate(dv),to,part,amt,paid:false,paidDate:null,method:'',ref:''});
+  document.getElementById('toInput').value  = '';
+  document.getElementById('partInput').value= '';
+  document.getElementById('amtInput').value = '';
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  document.getElementById('invNo').value    = 'TCP/2025-26/KB '+(invoices.length+1);
+  document.getElementById('invDate').value  = new Date().toISOString().split('T')[0];
+  updatePreview();
+  showToast('✔ Invoice saved successfully!','green');
+}
+
+// ============================================================
+// DOWNLOAD EXCEL — calls Python server for perfect formatting
+// ============================================================
+async function dlExcel(){
+  const to   = document.getElementById('toInput').value.trim() || 'CLIENT';
+  const part = document.getElementById('partInput').value.trim() || '';
+  const amt  = parseFloat(document.getElementById('amtInput').value) || 0;
+  const no   = document.getElementById('invNo').value.trim() || '';
+  const dv   = document.getElementById('invDate').value;
+  const ds   = dv ? fmtDate(dv) : '';
+  if(!to || to==='CLIENT'){ showToast('⚠ Please select a client first'); return; }
+  if(!amt){ showToast('⚠ Please enter an amount first'); return; }
+
+  const filename = `KB_Invoice_${no.replace(/[^a-z0-9]/gi,'_')}_${to.split(' ')[0]}.xlsx`;
+
+  // Try Python server first (gives perfect formatting)
+  try {
+    const resp = await fetch('http://localhost:7788', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ to, particular: part, amount: amt, inv_no: no, date: ds })
+    });
+    if(resp.ok){
+      const data = await resp.json();
+      const bytes = Uint8Array.from(atob(data.b64), c => c.charCodeAt(0));
+      const blob  = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = filename; a.click();
+      showToast('⬇ Excel downloaded (formatted)!','gold');
+      return;
+    }
+  } catch(e) {
+    // Server not running — show instructions
+    showServerHelp(to, part, amt, no, ds, filename);
+    return;
+  }
+}
+
+function showServerHelp(to, part, amt, no, ds, filename){
+  document.getElementById('srvModal').style.display = 'flex';
+}
+
+function downloadServerScript(){
+  const script = `#!/usr/bin/env python3
+"""KB Bills - Local Excel Generator Server
+Run: python3 kb_server.py
+Then open KB_Invoice_Generator_v2.html in your browser.
+Keep this Terminal window open while using the app.
+"""
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json, io, base64
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side
+
+def thin(): return Side(border_style='thin', color='000000')
+def border_all(): return Border(left=thin(), right=thin(), top=thin(), bottom=thin())
+
+def n2w(n):
+    if not n: return ''
+    a=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen']
+    b=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety']
+    def w(x):
+        if x<20: return a[x]
+        if x<100: return b[x//10]+(' '+a[x%10] if x%10 else '')
+        if x<1000: return a[x//100]+' Hundred'+(' '+w(x%100) if x%100 else '')
+        if x<100000: return w(x//1000)+' Thousand'+(' '+w(x%1000) if x%1000 else '')
+        if x<10000000: return w(x//100000)+' Lakh'+(' '+w(x%100000) if x%100000 else '')
+        return w(x//10000000)+' Crore'+(' '+w(x%10000000) if x%10000000 else '')
+    return 'Rupees '+w(int(n))+' Only'
+
+def build_excel(to_name, particular, amount, inv_no, date_str):
+    amount = int(float(amount))
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Invoice'
+    ws.column_dimensions['A'].width = 68.5703125
+    ws.column_dimensions['B'].width = 18.7109375
+    ws.row_dimensions[1].height = 25.5
+    ws.row_dimensions[2].height = 18.0
+    for r in range(3, 34): ws.row_dimensions[r].height = 15.75
+
+    def sc(coord, value, bold=False, size=12, ha=None, va='center', wrap=False, brd=None):
+        c = ws[coord]
+        c.value = value
+        c.font = Font(name='Cambria', bold=bold, size=size)
+        kw = dict(vertical=va, wrap_text=wrap)
+        if ha: kw['horizontal'] = ha
+        c.alignment = Alignment(**kw)
+        if brd: c.border = brd
+
+    ws.merge_cells('A1:B1'); ws.merge_cells('A2:B2'); ws.merge_cells('A3:B3')
+    ws.merge_cells('A8:B8'); ws.merge_cells('A32:B32')
+    sc('A1','KASHMIRA RAKESH BHANGE',bold=True,size=20,ha='center')
+    sc('A2','3, Manewada Besa Road , Nagpur-440027',size=14,ha='center')
+    sc('A5','Income Tax Permanent Account No. DEMPB8933J',size=12,ha='left')
+    sc('A6','Invoice No: '+inv_no,size=12,ha='left')
+    sc('B6','Date: '+date_str,size=12,ha='right')
+    sc('A8','MEMORANDUM OF FEES',bold=True,size=12,ha='center')
+    sc('A10','To,',bold=True,size=12)
+    sc('A11',to_name,bold=True,size=12)
+    sc('A15','Dear Sirs,',size=12,ha='left')
+    sc('A16','We append hereto note of our professional fees towards charges for various professional / ',size=12,ha='left')
+    sc('A17','certification services and shall be oblige if you could arrange to send us your local Cheque ',size=12,ha='left')
+    sc('A18','at the earliest',size=12,ha='left')
+    sc('A20','Particulars ',bold=True,size=12,brd=border_all())
+    sc('B20','Amount',bold=True,size=12,ha='right',brd=border_all())
+    sc('A21',particular,size=12,brd=border_all())
+    ws['B21'].value=amount; ws['B21'].font=Font(name='Cambria',bold=True,size=12)
+    ws['B21'].alignment=Alignment(horizontal='right',vertical='center')
+    ws['B21'].border=border_all(); ws['B21'].number_format='#,##0'
+    sc('A22','TOTAL',bold=True,size=12,brd=border_all(),wrap=True)
+    ws['B22'].value=amount; ws['B22'].font=Font(name='Cambria',bold=True,size=12)
+    ws['B22'].alignment=Alignment(horizontal='right',vertical='center')
+    ws['B22'].border=border_all(); ws['B22'].number_format='#,##0'
+    sc('A24','('+n2w(amount)+')',bold=True,size=12,ha='left')
+    sc('A27','S/d-',size=12,ha='left')
+    sc('A29','Authorised Signatory',size=12,ha='left')
+    sc('A31','# Note: pls issue cheque in the Name of KASHMIRA RAKESH BHANGE',bold=True,size=12,ha='left')
+    sc('A32','Bank A/c Details: HDFC BANK, DHANTOLI BRANCH : 50100208732312 IFSC CODE:HDFC0001009  ',bold=True,size=12,ha='left')
+    buf = io.BytesIO(); wb.save(buf); buf.seek(0); return buf.read()
+
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, format, *args): pass
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.send_header('Access-Control-Allow-Methods','POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers','Content-Type')
+        self.end_headers()
+    def do_POST(self):
+        length = int(self.headers.get('Content-Length',0))
+        data = json.loads(self.rfile.read(length))
+        xlsx = build_excel(data['to'],data['particular'],data['amount'],data['inv_no'],data['date'])
+        b64 = base64.b64encode(xlsx).decode()
+        self.send_response(200)
+        self.send_header('Content-Type','application/json')
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.end_headers()
+        self.wfile.write(json.dumps({'b64':b64}).encode())
+
+if __name__ == '__main__':
+    port = 7788
+    print(f'KB Bills Excel Server running on http://localhost:{port}')
+    print('Open KB_Invoice_Generator_v2.html in your browser.')
+    print('Press Ctrl+C to stop.')
+    HTTPServer(('localhost', port), Handler).serve_forever()
+`;
+  const blob = new Blob([script], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'kb_server.py'; a.click();
+  showToast('⬇ kb_server.py downloaded', 'gold');
+}
+
+function copyText(){
+  const to   = document.getElementById('toInput').value.trim() || '—';
+  const part = document.getElementById('partInput').value.trim() || '—';
+  const amt  = parseFloat(document.getElementById('amtInput').value) || 0;
+  const no   = document.getElementById('invNo').value.trim() || '—';
+  const dv   = document.getElementById('invDate').value;
+  const t = `KASHMIRA RAKESH BHANGE\n3, Manewada Besa Road, Nagpur-440027\nPAN: DEMPB8933J\n\nInvoice No: ${no}    Date: ${dv?fmtDate(dv):'—'}\n\nMEMORANDUM OF FEES\n\nTo,\n${to}\n\nDear Sirs,\nWe append hereto note of our professional fees towards charges for various professional / certification services and shall be obliged if you could arrange to send us your local Cheque at the earliest.\n\nParticulars: ${part}\nAmount: ₹${amt.toLocaleString('en-IN')}\nTOTAL: ₹${amt.toLocaleString('en-IN')}\n\n(${n2w(amt)})\n\nS/d-\nAuthorised Signatory\nFor Kashmira Rakesh Bhange\n\nBank: HDFC Bank, Dhantoli Branch\nA/c: 50100208732312  IFSC: HDFC0001009`;
+  navigator.clipboard.writeText(t).then(()=>showToast('⎘ Copied to clipboard!'));
+}
+
+// ============================================================
+// TRACKER
+// ============================================================
+function renderTracker(){ renderStats(); renderRows(); }
+
+function renderStats(){
+  const tot  = invoices.reduce((s,i)=>s+i.amt, 0);
+  const paid = invoices.filter(i=>i.paid).reduce((s,i)=>s+i.amt, 0);
+  const pc   = invoices.filter(i=>i.paid).length;
+  const ov   = invoices.filter(i=>!i.paid && daysSince(i.date) > 30).length;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-box"><div class="stat-label">Total Invoices</div><div class="stat-val">${invoices.length}</div><div class="stat-sub">FY 2025–26</div></div>
+    <div class="stat-box"><div class="stat-label">Total Billed</div><div class="stat-val gold">₹${(tot/1000).toFixed(1)}K</div><div class="stat-sub">₹${tot.toLocaleString('en-IN')}</div></div>
+    <div class="stat-box"><div class="stat-label">Received (${pc})</div><div class="stat-val green">₹${(paid/1000).toFixed(1)}K</div><div class="stat-sub">₹${paid.toLocaleString('en-IN')}</div></div>
+    <div class="stat-box"><div class="stat-label">Pending (${invoices.length-pc})</div><div class="stat-val red">₹${((tot-paid)/1000).toFixed(1)}K</div><div class="stat-sub">${ov} overdue 30d+</div></div>`;
+}
+
+function renderRows(){
+  const q   = (document.getElementById('tSearch')?.value||'').toLowerCase();
+  const srt = document.getElementById('sortSel')?.value || 'date-desc';
+  const today = new Date();
+
+  let f = invoices.filter(i => {
+    const mf = curFilter==='all' ||
+               (curFilter==='paid' && i.paid) ||
+               (curFilter==='unpaid' && !i.paid) ||
+               (curFilter==='overdue' && !i.paid && daysSince(i.date) > 30);
+    const ms = !q || i.no.toLowerCase().includes(q) || i.to.toLowerCase().includes(q) ||
+               String(i.amt).includes(q) || i.part.toLowerCase().includes(q) ||
+               (i.paidDate||'').toLowerCase().includes(q);
+    return mf && ms;
+  });
+
+  f.sort((a,b)=>{
+    if(srt==='date-desc') return parseD(b.date)-parseD(a.date);
+    if(srt==='date-asc')  return parseD(a.date)-parseD(b.date);
+    if(srt==='amt-desc')  return b.amt-a.amt;
+    if(srt==='amt-asc')   return a.amt-b.amt;
+    if(srt==='alpha')     return a.to.localeCompare(b.to);
+    return 0;
+  });
+
+  if(!f.length){
+    document.getElementById('tBody').innerHTML = `<div class="empty-state"><div class="empty-icon">🗂</div><div style="font-size:14px;">No invoices found</div></div>`;
+    return;
+  }
+
+  document.getElementById('tBody').innerHTML = f.map(inv => {
+    const dc = inv.paid && inv.paidDate ? calcDays(inv.date, inv.paidDate) : null;
+    const isOverdue = !inv.paid && daysSince(inv.date) > 30;
+    const dh = dc !== null
+      ? `<span class="days-badge${dc>30?' late':''}">${dc}d</span>${inv.paidDate?`<div style="font-size:10px;color:var(--ink-mute);margin-top:2px;">${inv.paidDate}${inv.method?' · '+inv.method:''}</div>`:''}`
+      : (isOverdue ? `<span class="days-badge late">${daysSince(inv.date)}d old</span>` : `<span style="font-size:11px;color:var(--ink-mute);">—</span>`);
+    return `<div class="t-row">
+      <div class="t-inv-no">${inv.no}</div>
+      <div><div class="t-company">${inv.to}</div></div>
+      <div class="t-part" title="${inv.part}">${inv.part}</div>
+      <div class="t-date">${inv.date}</div>
+      <div class="t-amt">₹${inv.amt.toLocaleString('en-IN')}</div>
+      <div class="status-cell">
+        <button class="toggle-btn${inv.paid?' on':''}" onclick="togPaid('${inv.id}',event)"></button>
+        <span class="s-text ${inv.paid?'paid':'unpaid'}">${inv.paid?'Paid':'Unpaid'}</span>
+      </div>
+      <div>${dh}</div>
+      <div class="row-action"><button class="row-btn" onclick="reGenInv('${inv.id}')" title="Regenerate Invoice">↗</button></div>
+    </div>`;
+  }).join('');
+}
+
+function daysSince(dateStr){
+  return Math.round((new Date()-parseD(dateStr))/864e5);
+}
+function parseD(s){
+  const p = s.split('.');
+  return p.length===3 ? new Date(p[2],p[1]-1,p[0]) : new Date(s);
+}
+function calcDays(a,b){ return Math.round((parseD(b)-parseD(a))/864e5); }
+
+function togPaid(id, e){
+  e.stopPropagation();
+  const inv = invoices.find(i=>i.id===id); if(!inv) return;
+  if(inv.paid){
+    inv.paid=false; inv.paidDate=null; inv.method=''; inv.ref='';
+    renderTracker(); showToast('Marked as unpaid');
+  } else {
+    pendId = id;
+    document.getElementById('mDate').value   = new Date().toISOString().split('T')[0];
+    document.getElementById('mMethod').value = '';
+    document.getElementById('mRef').value    = '';
+    document.getElementById('mTitle').textContent = 'Record Payment — '+inv.to.split(' ').slice(0,4).join(' ');
+    document.getElementById('mOverlay').classList.add('open');
+  }
+}
+function closeM(){ document.getElementById('mOverlay').classList.remove('open'); pendId=null; }
+function confirmM(){
+  const inv = invoices.find(i=>i.id===pendId); if(!inv) return;
+  const dv  = document.getElementById('mDate').value;
+  inv.paid     = true;
+  inv.paidDate = dv ? fmtDate(dv) : fmtDate(new Date().toISOString().split('T')[0]);
+  inv.method   = document.getElementById('mMethod').value;
+  inv.ref      = document.getElementById('mRef').value;
+  closeM(); renderTracker(); showToast('✔ Payment recorded!', 'green');
+}
+
+function setF(f, btn){
+  curFilter = f;
+  document.querySelectorAll('.f-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderRows();
+}
+
+// Re-generate: load invoice into generator
+function reGenInv(id){
+  const inv = invoices.find(i=>i.id===id); if(!inv) return;
+  document.getElementById('toInput').value   = inv.to;
+  document.getElementById('partInput').value = inv.part;
+  document.getElementById('amtInput').value  = inv.amt;
+  document.getElementById('invNo').value     = 'TCP/2025-26/'+inv.no;
+  updatePreview();
+  switchView('gen');
+  showToast('Invoice loaded into generator','gold');
+}
+
+// ============================================================
+// EXPORT ALL
+// ============================================================
+function exportAllCSV(){
+  let csv = 'Invoice No,Date,Client,Particulars,Amount,Status,Paid Date,Method,Reference\n';
+  invoices.forEach(i => {
+    csv += `"${i.no}","${i.date}","${i.to}","${i.part}",${i.amt},"${i.paid?'Paid':'Unpaid'}","${i.paidDate||''}","${i.method||''}","${i.ref||''}"\n`;
+  });
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='KB_Bills_Export.csv'; a.click();
+  showToast('⬇ CSV exported', 'gold');
+}
+function exportAllExcel(){
+  const wb = XLSX.utils.book_new();
+  // Summary sheet
+  const sumRows = [
+    ['KB BILLS — INVOICE REGISTER', null, null, null, null, null, null, null, null],
+    ['Kashmira Rakesh Bhange | PAN: DEMPB8933J | 3, Manewada Besa Road, Nagpur-440027'],
+    [],
+    ['Invoice No','Date','Client','Particulars','Amount (₹)','Status','Paid Date','Payment Method','Ref/UTR']
+  ];
+  invoices.forEach(i => {
+    sumRows.push([i.no, i.date, i.to, i.part, i.amt, i.paid?'Paid':'Unpaid', i.paidDate||'', i.method||'', i.ref||'']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(sumRows);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:45},{wch:55},{wch:14},{wch:10},{wch:13},{wch:16},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, ws, 'All Bills');
+  XLSX.writeFile(wb, 'KB_Bills_Register_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('⬇ Excel register exported', 'gold');
+}
+
+// ============================================================
+// VIEW SWITCH
+// ============================================================
+function switchView(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.remove('active'));
+  if(v==='gen'){
+    document.getElementById('viewGen').classList.add('active');
+    document.getElementById('navGen').classList.add('active');
+  } else {
+    document.getElementById('viewTrack').classList.add('active');
+    document.getElementById('navTrack').classList.add('active');
+    renderTracker();
+  }
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showToast(m, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = m; t.className = 'toast'+(type?' '+type:'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function n2w(n){
+  if(!n) return '';
+  const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function w(x){
+    if(x < 20) return a[x];
+    if(x < 100) return b[Math.floor(x/10)]+(x%10?' '+a[x%10]:'');
+    if(x < 1000) return a[Math.floor(x/100)]+' Hundred'+(x%100?' '+w(x%100):'');
+    if(x < 100000) return w(Math.floor(x/1000))+' Thousand'+(x%1000?' '+w(x%1000):'');
+    if(x < 10000000) return w(Math.floor(x/100000))+' Lakh'+(x%100000?' '+w(x%100000):'');
+    return w(Math.floor(x/10000000))+' Crore'+(x%10000000?' '+w(x%10000000):'');
+  }
+  return 'Rupees '+w(Math.floor(n))+' Only';
+}
+</script>
+</body>
+</html>
