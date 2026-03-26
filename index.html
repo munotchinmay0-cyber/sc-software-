@@ -459,29 +459,9 @@ a{color:var(--gold);}
 
 <div class="toast" id="toast"></div>
 
-<!-- SERVER HELP MODAL -->
-<div id="srvModal" style="display:none;position:fixed;inset:0;background:rgba(28,24,18,0.45);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
-  <div style="background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow-lg);padding:28px;width:500px;max-width:95vw;border:1px solid var(--border);">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:600;margin-bottom:6px;">⚡ One-Time Setup Required</div>
-    <div style="font-size:12px;color:var(--ink-mute);margin-bottom:18px;">To download perfectly formatted Excel (bold, centered, proper fonts), run the KB server once on your Mac.</div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:14px;">
-      <div style="font-size:11px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">Step 1 — Open Terminal on your Mac and run:</div>
-      <code style="display:block;background:#1c1812;color:#e8d8b0;padding:10px 13px;border-radius:5px;font-size:12.5px;letter-spacing:0.3px;">pip3 install openpyxl<br>python3 kb_server.py</code>
-    </div>
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px;margin-bottom:18px;">
-      <div style="font-size:11px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;margin-bottom:8px;">Step 2 — Keep that Terminal window open, then click ⬇ Excel again</div>
-      <div style="font-size:12px;color:var(--ink-soft);">The server runs silently in the background. Your Excel files will now have:<br>✔ Bold headers &amp; centered name · ✔ Cambria font · ✔ Proper table borders · ✔ Merged cells · ✔ Exact column widths</div>
-    </div>
-    <div style="font-size:11.5px;color:var(--ink-mute);margin-bottom:16px;">📁 Keep <strong>kb_server.py</strong> in the same folder as this HTML file. Download it below if needed.</div>
-    <div style="display:flex;gap:9px;">
-      <button class="btn btn-secondary" style="flex:none;padding:9px 16px;font-size:13px;" onclick="document.getElementById('srvModal').style.display='none'">Close</button>
-      <button class="btn btn-gold" style="flex:none;padding:9px 16px;font-size:13px;" onclick="downloadServerScript()">⬇ Download kb_server.py</button>
-      <button class="btn btn-primary" style="flex:none;padding:9px 16px;font-size:13px;" onclick="document.getElementById('srvModal').style.display='none';dlExcel()">🔄 Retry Excel Download</button>
-    </div>
-  </div>
-</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
 <script>
 // ============================================================
 // DATA
@@ -748,9 +728,9 @@ function saveInv(){
 }
 
 // ============================================================
-// DOWNLOAD EXCEL — calls Python server for perfect formatting
+// DOWNLOAD EXCEL — direct browser generation, no server needed
 // ============================================================
-async function dlExcel(){
+function dlExcel(){
   const to   = document.getElementById('toInput').value.trim() || 'CLIENT';
   const part = document.getElementById('partInput').value.trim() || '';
   const amt  = parseFloat(document.getElementById('amtInput').value) || 0;
@@ -762,32 +742,144 @@ async function dlExcel(){
 
   const filename = `KB_Invoice_${no.replace(/[^a-z0-9]/gi,'_')}_${to.split(' ')[0]}.xlsx`;
 
-  // Try Python server first (gives perfect formatting)
-  try {
-    const resp = await fetch('http://localhost:7788', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ to, particular: part, amount: amt, inv_no: no, date: ds })
-    });
-    if(resp.ok){
-      const data = await resp.json();
-      const bytes = Uint8Array.from(atob(data.b64), c => c.charCodeAt(0));
-      const blob  = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-      a.download = filename; a.click();
-      showToast('⬇ Excel downloaded (formatted)!','gold');
-      return;
-    }
-  } catch(e) {
-    // Server not running — show instructions
-    showServerHelp(to, part, amt, no, ds, filename);
-    return;
+  // ---- Style helpers ----
+  const F = (bold, sz, name) => ({ bold: !!bold, sz: sz||12, name: name||'Cambria' });
+  const A = (h, v) => ({ horizontal: h||'left', vertical: v||'center' });
+  const B = { top:{style:'thin',color:{rgb:'000000'}}, bottom:{style:'thin',color:{rgb:'000000'}}, left:{style:'thin',color:{rgb:'000000'}}, right:{style:'thin',color:{rgb:'000000'}} };
+
+  function cell(v, bold, sz, halign, border){
+    const c = { v: v, t: typeof v === 'number' ? 'n' : 's' };
+    c.s = { font: F(bold, sz), alignment: A(halign||'left') };
+    if(border) c.s.border = B;
+    if(typeof v === 'number') c.z = '"Rs. "#,##0.00';
+    return c;
   }
+  function cellC(v, bold, sz){ // centered
+    const c = { v: v, t: 's', s: { font: F(bold, sz), alignment: A('center') } };
+    return c;
+  }
+  function cellR(v, bold, sz, border){ // right-aligned
+    const c = { v: v, t: typeof v === 'number' ? 'n' : 's' };
+    c.s = { font: F(bold, sz), alignment: A('right') };
+    if(border) c.s.border = B;
+    if(typeof v === 'number') c.z = '"Rs. "#,##0.00';
+    return c;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = {};
+
+  // Column widths — A wide, B for amount
+  ws['!cols'] = [{ wch: 62 }, { wch: 18 }];
+
+  // Row heights
+  ws['!rows'] = [
+    {hpt:26},{hpt:18},{hpt:6},{hpt:18},{hpt:6},   // rows 1-5
+    {hpt:18},{hpt:6},{hpt:20},{hpt:6},{hpt:18},    // rows 6-10
+    {hpt:18},{hpt:18},{hpt:6},{hpt:6},{hpt:18},    // rows 11-15
+    {hpt:18},{hpt:18},{hpt:18},{hpt:6},{hpt:20},   // rows 16-20
+    {hpt:18},{hpt:20},{hpt:6},{hpt:18},{hpt:6},    // rows 21-25
+    {hpt:6},{hpt:18},{hpt:6},{hpt:18},{hpt:6},     // rows 26-30
+    {hpt:18},{hpt:18},{hpt:18}                     // rows 31-33
+  ];
+
+  // Merged cells
+  ws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:1}},   // A1:B1  Name
+    {s:{r:1,c:0},e:{r:1,c:1}},   // A2:B2  Address
+    {s:{r:3,c:0},e:{r:3,c:1}},   // A4:B4  PAN
+    {s:{r:7,c:0},e:{r:7,c:1}},   // A8:B8  MEMORANDUM
+    {s:{r:23,c:0},e:{r:23,c:1}}, // A24:B24 Amount words
+    {s:{r:30,c:0},e:{r:30,c:1}}, // A31:B31 Note
+    {s:{r:31,c:0},e:{r:31,c:1}}, // A32:B32 Bank
+  ];
+
+  // ROW 1 — KASHMIRA RAKESH BHANGE — BOLD, SIZE 14, CENTERED
+  ws['A1'] = cellC('KASHMIRA RAKESH BHANGE', true, 14);
+
+  // ROW 2 — Address — centered
+  ws['A2'] = cellC('3, Manewada Besa Road , Nagpur-440027', false, 12);
+
+  // ROW 3 — blank
+
+  // ROW 4 — PAN — left
+  ws['A4'] = cell('Income Tax Permanent Account No. DEMPB8933J', false, 12, 'left');
+
+  // ROW 5 — blank
+
+  // ROW 6 — Invoice No (left) | Date (right)
+  ws['A6'] = cell('Invoice No: ' + no, false, 12, 'left');
+  ws['B6'] = cellR('Date: ' + ds, false, 12);
+
+  // ROW 7 — blank
+
+  // ROW 8 — MEMORANDUM OF FEES — bold, centered
+  ws['A8'] = cellC('MEMORANDUM OF FEES', true, 12);
+
+  // ROW 9 — blank
+
+  // ROW 10 — To,
+  ws['A10'] = cell('To,', false, 12, 'left');
+
+  // ROW 11 — Client name — bold
+  ws['A11'] = cell(to, true, 12, 'left');
+
+  // ROW 12 — (extra line for long client names that span 2 lines like "Nagpur" below)
+  // ROW 13-14 — blank
+
+  // ROW 15 — Dear Sirs,
+  ws['A15'] = cell('Dear Sirs,', false, 12, 'left');
+
+  // ROW 16-18 — Body text
+  ws['A16'] = cell('We append hereto note of our professional fees towards charges for various professional /', false, 12, 'left');
+  ws['A17'] = cell('certification services and shall be oblige if you could arrange to send us your local Cheque', false, 12, 'left');
+  ws['A18'] = cell('at the earliest', false, 12, 'left');
+
+  // ROW 19 — blank
+
+  // ROW 20 — Table headers — BOLD + BORDER
+  ws['A20'] = cell('Particulars', true, 12, 'left', true);
+  ws['B20'] = cellR('Amount', true, 12, true);
+
+  // ROW 21 — Particulars data + Amount — bordered
+  ws['A21'] = cell(part, false, 12, 'left', true);
+  ws['B21'] = cellR(amt, false, 12, true);
+
+  // ROW 22 — TOTAL — bold + bordered
+  ws['A22'] = cell('TOTAL', true, 12, 'left', true);
+  ws['B22'] = cellR(amt, false, 12, true);
+
+  // ROW 23 — blank
+
+  // ROW 24 — Amount in words — bold
+  ws['A24'] = cell('(' + n2w(amt) + ')', true, 12, 'left');
+
+  // ROW 25-26 — blank
+
+  // ROW 27 — S/d-
+  ws['A27'] = cell('S/d-', false, 12, 'left');
+
+  // ROW 28 — blank
+
+  // ROW 29 — Authorised Signatory
+  ws['A29'] = cell('Authorised Signatory', false, 12, 'left');
+
+  // ROW 30 — blank
+
+  // ROW 31 — Note bold
+  ws['A31'] = cell('# Note: pls issue cheque in the Name of KASHMIRA RAKESH BHANGE', true, 12, 'left');
+
+  // ROW 32 — Bank details bold
+  ws['A32'] = cell('Bank A/c Details: HDFC BANK, DHANTOLI BRANCH : 50100208732312 IFSC CODE:HDFC0001009', true, 12, 'left');
+
+  ws['!ref'] = 'A1:B33';
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
+  XLSX.writeFile(wb, filename);
+  showToast('⬇ Excel downloaded!', 'gold');
 }
 
-function showServerHelp(to, part, amt, no, ds, filename){
-  document.getElementById('srvModal').style.display = 'flex';
-}
+function showServerHelp(){ /* no longer used */ }
 
 function downloadServerScript(){
   const script = `#!/usr/bin/env python3
@@ -824,48 +916,88 @@ def build_excel(to_name, particular, amount, inv_no, date_str):
     ws.title = 'Invoice'
     ws.column_dimensions['A'].width = 68.5703125
     ws.column_dimensions['B'].width = 18.7109375
-    ws.row_dimensions[1].height = 25.5
-    ws.row_dimensions[2].height = 18.0
-    for r in range(3, 34): ws.row_dimensions[r].height = 15.75
+    ws.row_dimensions[1].height = 30.0
+    ws.row_dimensions[2].height = 20.0
+    ws.row_dimensions[3].height = 18.0
+    for r in range(4, 36): ws.row_dimensions[r].height = 15.75
 
-    def sc(coord, value, bold=False, size=12, ha=None, va='center', wrap=False, brd=None):
+    def sc(coord, value, bold=False, size=12, ha='left', va='center', wrap=False, brd=None, italic=False):
         c = ws[coord]
         c.value = value
-        c.font = Font(name='Cambria', bold=bold, size=size)
-        kw = dict(vertical=va, wrap_text=wrap)
-        if ha: kw['horizontal'] = ha
-        c.alignment = Alignment(**kw)
+        c.font = Font(name='Cambria', bold=bold, size=size, italic=italic)
+        c.alignment = Alignment(horizontal=ha, vertical=va, wrap_text=wrap)
         if brd: c.border = brd
 
-    ws.merge_cells('A1:B1'); ws.merge_cells('A2:B2'); ws.merge_cells('A3:B3')
-    ws.merge_cells('A8:B8'); ws.merge_cells('A32:B32')
-    sc('A1','KASHMIRA RAKESH BHANGE',bold=True,size=20,ha='center')
-    sc('A2','3, Manewada Besa Road , Nagpur-440027',size=14,ha='center')
-    sc('A5','Income Tax Permanent Account No. DEMPB8933J',size=12,ha='left')
-    sc('A6','Invoice No: '+inv_no,size=12,ha='left')
-    sc('B6','Date: '+date_str,size=12,ha='right')
-    sc('A8','MEMORANDUM OF FEES',bold=True,size=12,ha='center')
-    sc('A10','To,',bold=True,size=12)
-    sc('A11',to_name,bold=True,size=12)
-    sc('A15','Dear Sirs,',size=12,ha='left')
-    sc('A16','We append hereto note of our professional fees towards charges for various professional / ',size=12,ha='left')
-    sc('A17','certification services and shall be oblige if you could arrange to send us your local Cheque ',size=12,ha='left')
-    sc('A18','at the earliest',size=12,ha='left')
-    sc('A20','Particulars ',bold=True,size=12,brd=border_all())
-    sc('B20','Amount',bold=True,size=12,ha='right',brd=border_all())
-    sc('A21',particular,size=12,brd=border_all())
-    ws['B21'].value=amount; ws['B21'].font=Font(name='Cambria',bold=True,size=12)
-    ws['B21'].alignment=Alignment(horizontal='right',vertical='center')
-    ws['B21'].border=border_all(); ws['B21'].number_format='#,##0'
-    sc('A22','TOTAL',bold=True,size=12,brd=border_all(),wrap=True)
-    ws['B22'].value=amount; ws['B22'].font=Font(name='Cambria',bold=True,size=12)
-    ws['B22'].alignment=Alignment(horizontal='right',vertical='center')
-    ws['B22'].border=border_all(); ws['B22'].number_format='#,##0'
-    sc('A24','('+n2w(amount)+')',bold=True,size=12,ha='left')
-    sc('A27','S/d-',size=12,ha='left')
-    sc('A29','Authorised Signatory',size=12,ha='left')
-    sc('A31','# Note: pls issue cheque in the Name of KASHMIRA RAKESH BHANGE',bold=True,size=12,ha='left')
-    sc('A32','Bank A/c Details: HDFC BANK, DHANTOLI BRANCH : 50100208732312 IFSC CODE:HDFC0001009  ',bold=True,size=12,ha='left')
+    # Merge cells for header and key rows
+    ws.merge_cells('A1:B1')
+    ws.merge_cells('A2:B2')
+    ws.merge_cells('A3:B3')
+    ws.merge_cells('A8:B8')
+    ws.merge_cells('A32:B32')
+    ws.merge_cells('A33:B33')
+
+    # Row 1 — Name: centered, bold, large
+    sc('A1', 'KASHMIRA RAKESH BHANGE', bold=True, size=16, ha='center')
+
+    # Row 2 — Address: centered
+    sc('A2', '3, Manewada Besa Road, Nagpur-440027', bold=False, size=12, ha='center')
+
+    # Row 3 — PAN: centered
+    sc('A3', 'Income Tax Permanent Account No. DEMPB8933J', bold=False, size=11, ha='center')
+
+    # Row 5 — blank separator row (already handled by row heights)
+
+    # Row 6 — Invoice No (left) and Date (right)
+    sc('A6', 'Invoice No: ' + inv_no, bold=False, size=12, ha='left')
+    sc('B6', 'Date: ' + date_str, bold=False, size=12, ha='right')
+
+    # Row 8 — MEMORANDUM OF FEES: centered, bold
+    sc('A8', 'MEMORANDUM OF FEES', bold=True, size=12, ha='center')
+
+    # Row 10-11 — To block
+    sc('A10', 'To,', bold=True, size=12, ha='left')
+    sc('A11', to_name, bold=True, size=12, ha='left')
+
+    # Row 15-18 — Body text
+    sc('A15', 'Dear Sirs,', bold=False, size=12, ha='left')
+    sc('A16', 'We append hereto note of our professional fees towards charges for various professional /', bold=False, size=12, ha='left')
+    sc('A17', 'certification services and shall be obliged if you could arrange to send us your local Cheque', bold=False, size=12, ha='left')
+    sc('A18', 'at the earliest.', bold=False, size=12, ha='left')
+
+    # Row 20 — Table header: bold, bordered
+    sc('A20', 'Particulars', bold=True, size=12, ha='left', brd=border_all())
+    sc('B20', 'Amount', bold=True, size=12, ha='right', brd=border_all())
+
+    # Row 21 — Particulars row
+    sc('A21', particular, bold=False, size=12, ha='left', brd=border_all())
+    ws['B21'].value = amount
+    ws['B21'].font = Font(name='Cambria', bold=True, size=12)
+    ws['B21'].alignment = Alignment(horizontal='right', vertical='center')
+    ws['B21'].border = border_all()
+    ws['B21'].number_format = '#,##0'
+
+    # Row 22 — TOTAL row: bold
+    sc('A22', 'TOTAL', bold=True, size=12, ha='left', brd=border_all())
+    ws['B22'].value = amount
+    ws['B22'].font = Font(name='Cambria', bold=True, size=12)
+    ws['B22'].alignment = Alignment(horizontal='right', vertical='center')
+    ws['B22'].border = border_all()
+    ws['B22'].number_format = '#,##0'
+
+    # Row 24 — Amount in words: bold
+    sc('A24', '(' + n2w(amount) + ')', bold=True, size=12, ha='left')
+
+    # Row 27, 29 — Signature block
+    sc('A27', 'S/d-', bold=False, size=12, ha='left')
+    sc('A29', 'Authorised Signatory', bold=False, size=12, ha='left')
+
+    # Row 31 — Cheque note: bold
+    sc('A31', '# Note: pls issue cheque in the Name of KASHMIRA RAKESH BHANGE', bold=True, size=12, ha='left')
+
+    # Row 32-33 — Bank details: bold, merged
+    sc('A32', 'Bank A/c Details: HDFC BANK, DHANTOLI BRANCH : 50100208732312  IFSC CODE: HDFC0001009', bold=True, size=12, ha='left')
+    sc('A33', 'Pay in Name of: KASHMIRA RAKESH BHANGE', bold=True, size=12, ha='left')
+
     buf = io.BytesIO(); wb.save(buf); buf.seek(0); return buf.read()
 
 class Handler(BaseHTTPRequestHandler):
@@ -1048,10 +1180,10 @@ function exportAllCSV(){
 }
 function exportAllExcel(){
   const wb = XLSX.utils.book_new();
-  // Summary sheet
   const sumRows = [
     ['KB BILLS — INVOICE REGISTER', null, null, null, null, null, null, null, null],
-    ['Kashmira Rakesh Bhange | PAN: DEMPB8933J | 3, Manewada Besa Road, Nagpur-440027'],
+    ['KASHMIRA RAKESH BHANGE', null, null, null, null, null, null, null, null],
+    ['PAN: DEMPB8933J  |  3, Manewada Besa Road, Nagpur-440027', null, null, null, null, null, null, null, null],
     [],
     ['Invoice No','Date','Client','Particulars','Amount (₹)','Status','Paid Date','Payment Method','Ref/UTR']
   ];
@@ -1059,9 +1191,25 @@ function exportAllExcel(){
     sumRows.push([i.no, i.date, i.to, i.part, i.amt, i.paid?'Paid':'Unpaid', i.paidDate||'', i.method||'', i.ref||'']);
   });
   const ws = XLSX.utils.aoa_to_sheet(sumRows);
-  ws['!cols'] = [{wch:12},{wch:12},{wch:45},{wch:55},{wch:14},{wch:10},{wch:13},{wch:16},{wch:18}];
+  ws['!cols'] = [{wch:14},{wch:12},{wch:45},{wch:55},{wch:14},{wch:10},{wch:13},{wch:16},{wch:18}];
+  ws['!merges'] = [
+    {s:{r:0,c:0},e:{r:0,c:8}},
+    {s:{r:1,c:0},e:{r:1,c:8}},
+    {s:{r:2,c:0},e:{r:2,c:8}}
+  ];
+  ['A1','A2','A3'].forEach(ref => {
+    if(!ws[ref]) ws[ref]={t:'s',v:''};
+    ws[ref].s = {
+      font: { bold: true, sz: ref==='A2' ? 16 : 12 },
+      alignment: { horizontal: 'center', vertical: 'center' }
+    };
+  });
+  ['A5','B5','C5','D5','E5','F5','G5','H5','I5'].forEach(ref => {
+    if(ws[ref]) ws[ref].s = { font: { bold: true }, alignment: { horizontal: 'center' } };
+  });
+  ws['!rows'] = [{hpt:20},{hpt:24},{hpt:18},{hpt:6},{hpt:18}];
   XLSX.utils.book_append_sheet(wb, ws, 'All Bills');
-  XLSX.writeFile(wb, 'KB_Bills_Register_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  XLSX.writeFile(wb, 'KB_Bills_Register_'+new Date().toISOString().slice(0,10)+'.xlsx', {cellStyles:true});
   showToast('⬇ Excel register exported', 'gold');
 }
 
