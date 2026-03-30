@@ -251,7 +251,126 @@ a{color:var(--gold);}
 .inv-upi-block strong{display:block;font-size:12px;color:var(--ink);margin-bottom:1px;}
 
 /* ===== PRINT ===== */
-@media print{body *{visibility:hidden;}#printArea,#printArea *{visibility:visible;}#printArea{position:fixed;left:0;top:0;width:100%;padding:36px;background:white;font-size:13px;}}
+@media print {
+
+  /* ── 1. Page canvas: A4 portrait, balanced margins ─────────────────── */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 18mm 15mm 18mm;
+  }
+
+  /* ── 2. Reset html/body so nothing bleeds outside the page ──────────── */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    /* Ensure background colours + images print faithfully */
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* ── 3. HIDE everything that is not the invoice ─────────────────────── */
+  /*    We hide whole sections by setting display:none so the browser
+        doesn't even reserve space for them.  This is the key reason
+        "fixed" didn't work before — the page was still scrolled past
+        the header, so the viewport offset was baked into the position.
+        With display:none those elements simply don't exist on the page. */
+
+  .header,
+  .gen-layout > div:first-child,   /* left input column */
+  .preview-card > .card-header,    /* "Live Preview" heading */
+  .preview-actions,                /* Print / Copy / Save buttons */
+  .fy-bar,
+  #viewTrack,
+  .track-layout,
+  .toast,
+  .modal-overlay  { display: none !important; }
+
+  /* ── 4. Collapse the two-column grid into a single full-width column ── */
+  /*    The gen-layout grid normally is "1fr 430px".  In print we want
+        only the right (preview) column to show, filling the full page. */
+  body            { font-family: 'Outfit', sans-serif !important; }
+
+  .view           { display: block !important; }
+
+  .gen-layout {
+    display: block !important;  /* kills the CSS grid — children flow normally */
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  /* ── 5. Strip chrome from the preview card wrapper ──────────────────── */
+  .preview-sticky {
+    position: static !important;   /* remove sticky so it flows from the top */
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .preview-card {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* ── 6. The printArea itself: full width, starts at the top of page 1 ─ */
+  #printArea, .preview-inner {
+    position: static !important;   /* just let it flow — no absolute/fixed tricks */
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 11pt !important;
+    color: #000 !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    overflow: visible !important;
+  }
+
+  /* ── 7. Scale every invoice element to pt units (physical, reliable) ── */
+  .inv-name        { font-size: 15pt !important; font-weight: 700 !important; }
+  .inv-addr        { font-size: 9.5pt !important; margin-top: 2pt !important; }
+  .inv-pan         { font-size: 9pt !important; margin-top: 2pt !important; }
+  .inv-divider     { margin: 10pt 0 !important; border-top: 1.5pt solid #c8b87a !important; }
+  .inv-meta-bar    { font-size: 10pt !important; margin-top: 0 !important; }
+  .inv-title-badge { font-size: 10.5pt !important; padding: 5pt 8pt !important; margin: 10pt 0 !important; letter-spacing: 2pt !important; }
+  .inv-to-label    { font-size: 9pt !important; }
+  .inv-to-name     { font-size: 12pt !important; font-weight: 700 !important; margin-top: 2pt !important; }
+  .inv-body        { font-size: 9.5pt !important; padding: 7pt 10pt !important; margin-bottom: 10pt !important; line-height: 1.55 !important; }
+  .inv-table       { width: 100% !important; border-collapse: collapse !important; margin-bottom: 5pt !important; }
+  .inv-table th    { font-size: 9.5pt !important; padding: 6pt 9pt !important; }
+  .inv-table td    { font-size: 10pt !important; padding: 7pt 9pt !important; }
+  .inv-table .tot-row td { font-size: 11pt !important; font-weight: 700 !important; }
+  .inv-words       { font-size: 9pt !important; padding: 4pt 8pt !important; margin-top: 3pt !important; }
+  .inv-bank        { font-size: 9.5pt !important; padding: 7pt 10pt !important; margin-top: 9pt !important; line-height: 1.6 !important; }
+  .inv-upi-block   { font-size: 9.5pt !important; padding: 7pt 10pt !important; margin-top: 8pt !important; }
+  .inv-sig         { font-size: 10pt !important; margin-top: 12pt !important; padding-top: 8pt !important; }
+  .inv-sig strong  { font-size: 11pt !important; }
+
+  /* ── 8. Make sure the QR code image is always shown & sized for print ─ */
+  #prevQrWrap      { display: block !important; }
+  #prevQrImg       { width: 100pt !important; height: 100pt !important; display: block !important; margin: 5pt auto !important; }
+
+  /* ── 9. Page-break rules — keep logical blocks together ─────────────── */
+  .inv-table            { page-break-inside: auto; }
+  .inv-table tr         { page-break-inside: avoid; page-break-after: auto; }
+  .inv-body,
+  .inv-bank,
+  .inv-upi-block,
+  .inv-sig              { page-break-inside: avoid; }
+}
 @media(max-width:900px){.gen-layout{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}.t-header,.t-row{grid-template-columns:55px 1fr 85px 85px 50px;}.t-header>*:nth-child(3),.t-row>*:nth-child(3),.t-header>*:nth-child(7),.t-row>*:nth-child(7){display:none;}}
 </style>
 </head>
@@ -1368,8 +1487,9 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function setCalDate(type, y, m, d) {
-  const date = new Date(y, m, d);
-  const iso = date.toISOString().split('T')[0];
+  const _m = String(m+1).padStart(2,'0');
+  const _d = String(d).padStart(2,'0');
+  const iso = y + '-' + _m + '-' + _d;
   if(type === 'inv') {
     document.getElementById('invDate').value = iso;
     document.getElementById('dpDisplay').textContent = d + ' ' + MONTHS_S[m] + ' ' + y;
