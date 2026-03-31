@@ -385,8 +385,8 @@ a{color:var(--gold);}
     </div>
   </div>
   <nav class="header-nav">
-    <button class="nav-btn active" id="navGen" onclick="switchView('gen')">✦ New Invoice</button>
-    <button class="nav-btn" id="navTrack" onclick="switchView('track')">⊟ All Invoices</button>
+    <button type="button" class="nav-btn active" id="navGen" onclick="switchView('gen')">✦ New Invoice</button>
+    <button type="button" class="nav-btn" id="navTrack" onclick="switchView('track')">⊟ All Invoices</button>
   </nav>
 </header>
 
@@ -419,7 +419,7 @@ a{color:var(--gold);}
             <label class="form-label">Add New Client</label>
             <div class="add-preset-row">
               <input type="text" class="form-control" id="newClientIn" placeholder="Enter new client name…" style="font-size:13px;padding:7px 10px;">
-              <button class="add-preset-btn" onclick="addNewItem('to')">+ Add</button>
+              <button type="button" class="add-preset-btn" onclick="addNewItem('to')">+ Add</button>
             </div>
           </div>
         </div>
@@ -446,8 +446,8 @@ a{color:var(--gold);}
           <div class="form-group">
             <label class="form-label">Add New Particular</label>
             <div class="add-preset-row">
-              <input type="text" class="form-control" id="newPartIn" placeholder="Enter new service description…" style="font-size:13px;padding:7px 10px;">
-              <button class="add-preset-btn" onclick="addNewItem('part')">+ Add</button>
+              <input type="text" class="form-control" id="newPartIn" placeholder="Enter new service description…" style="font-size:13px;padding:7px 10px;" onkeydown="if(event.key==='Enter') addNewItem('part')">
+              <button type="button" class="add-preset-btn" onclick="addNewItem('part')">+ Add</button>
             </div>
           </div>
         </div>
@@ -463,8 +463,8 @@ a{color:var(--gold);}
             <label class="form-label">Quick Select</label>
             <div class="chips-wrap" id="amountChips"></div>
             <div class="add-preset-row">
-              <input type="number" class="form-control" id="newAmtIn" placeholder="Add custom preset amount…" style="font-size:13px;padding:7px 10px;" min="1">
-              <button class="add-preset-btn" onclick="addPreset()">+ Preset</button>
+              <input type="number" class="form-control" id="newAmtIn" placeholder="Add custom preset amount…" style="font-size:13px;padding:7px 10px;" min="1" onkeydown="if(event.key==='Enter') addPreset()">
+              <button type="button" class="add-preset-btn" onclick="addPreset()">+ Preset</button>
             </div>
           </div>
           <div class="form-group" style="margin-top:12px;">
@@ -574,10 +574,10 @@ a{color:var(--gold);}
           <div class="inv-sig">S/d—<strong>Authorised Signatory</strong><div style="margin-top:2px;font-size:10px;">For Kashmira Rakesh Bhange</div></div>
         </div>
         <div class="preview-actions">
-          <button class="btn btn-secondary btn-sm" onclick="copyText()">⎘ Copy</button>
-          <button class="btn btn-secondary btn-sm" onclick="window.print()">⎙ Print</button>
-          <button class="btn btn-gold btn-sm" onclick="dlExcel()">⬇ Excel</button>
-          <button class="btn btn-primary btn-sm" onclick="saveInv()">✔ Save</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="copyText()">⎘ Copy</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">⎙ Print</button>
+          <button type="button" class="btn btn-gold btn-sm" onclick="dlExcel()">⬇ Excel</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveInv()">✔ Save</button>
         </div>
       </div>
     </div>
@@ -594,15 +594,15 @@ a{color:var(--gold);}
     <div class="fy-bar" id="fyBar">
       <span>📋 FY 2025–26 — Invoices are managed by <b>CS Pinkush Jaiswal</b> on behalf of <b>Kashmira Rakesh Bhange</b></span>
       <div class="fy-actions">
-        <button class="cal-sc-btn" onclick="showToast('💡 Mark all overdue invoices for follow-up!','gold')">⚑ Flag Overdue</button>
+        <button type="button" class="cal-sc-btn" onclick="showToast('💡 Mark all overdue invoices for follow-up!','gold')">⚑ Flag Overdue</button>
       </div>
     </div>
 
     <div class="export-strip">
       <span class="export-label">📊 Export your records</span>
       <div class="export-btns">
-        <button class="btn btn-secondary btn-sm" onclick="exportAllCSV()">⬇ Export CSV</button>
-        <button class="btn btn-gold btn-sm" onclick="exportAllExcel()">⬇ Export Excel (All Bills)</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="exportAllCSV()">⬇ Export CSV</button>
+        <button type="button" class="btn btn-gold btn-sm" onclick="exportAllExcel()">⬇ Export Excel (All Bills)</button>
       </div>
     </div>
 
@@ -717,6 +717,13 @@ let partList = [
 
 let presets = [1050,2000,2250,2500,3250,5000,5500,6500,6600,10000];
 
+let usageFreq = JSON.parse(localStorage.getItem('kbFreq')) || {};
+function markUsed(v) {
+  if(!v) return;
+  usageFreq[v] = (usageFreq[v] || 0) + 1;
+  localStorage.setItem('kbFreq', JSON.stringify(usageFreq));
+}
+
 let invoices = [
   {id:'KB01',no:'KB 01',date:'04.04.2025',to:'BRIOTA TECHNOLOGIES PRIVATE LIMITED',part:'Towards Class 3 DSC Charges of Miss. Vaibhavi Dattaraj Sakhare',amt:2250,paid:false,paidDate:null,method:'',ref:''},
   {id:'KB02',no:'KB 02',date:'04.04.2025',to:'EROS METAL WORKS PRIVATE LIMITED',part:'Towards Class 3 Combo DSC of EMPL (Amitkumar Pande)',amt:5500,paid:false,paidDate:null,method:'',ref:''},
@@ -804,11 +811,16 @@ function onAmt(v){
 function addPreset(){
   const v = parseInt(document.getElementById('newAmtIn').value);
   if(!v || v <= 0){ showToast('Enter a valid amount'); return; }
-  if(presets.includes(v)){ showToast('Preset already exists'); return; }
+  if(presets.includes(v)){ 
+    selAmt(v);
+    showToast('✔ Preset ₹'+v.toLocaleString('en-IN')+' selected', 'gold'); 
+    return; 
+  }
   presets.push(v); presets.sort((a,b)=>a-b);
   document.getElementById('newAmtIn').value = '';
   renderChips();
-  showToast('✔ Preset ₹'+v.toLocaleString('en-IN')+' added', 'gold');
+  selAmt(v);
+  showToast('✔ Preset ₹'+v.toLocaleString('en-IN')+' added & selected', 'gold');
 }
 
 // ============================================================
@@ -822,11 +834,19 @@ function getChevEl(t){ return document.getElementById(t==='to'?'toChev':'partChe
 function buildDropHTML(t){
   const list = getList(t);
   const q = getInputEl(t).value.toLowerCase().trim();
-  const filtered = q ? list.filter(x => x.toLowerCase().includes(q)) : list;
+  const filtered = q ? list.filter(x => x.toLowerCase().includes(q)) : list.slice();
+  
+  filtered.sort((a,b) => {
+    const fA = usageFreq[a] || 0;
+    const fB = usageFreq[b] || 0;
+    if(fB !== fA) return fB - fA;
+    return a.localeCompare(b);
+  });
+
   let html = '';
   filtered.forEach((x, i) => {
     const hl = q ? x.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'), '<strong>$1</strong>') : x;
-    html += `<div class="drop-item" data-val="${x.replace(/"/g,'&quot;')}" onclick="selDrop('${t}','${x.replace(/'/g,"\\'")}',event)">${hl}</div>`;
+    html += `<div class="drop-item" data-val="${x.replace(/"/g,'&quot;')}" onclick="selDrop('${t}','${x.replace(/'/g,"\\'")}',event)"><span>${hl}</span></div>`;
   });
   const raw = getInputEl(t).value.trim();
   if(raw && !list.some(x => x.toLowerCase() === raw.toLowerCase())){
@@ -859,6 +879,7 @@ function filterDrop(t){
 function selDrop(t, v, e){
   if(e) e.stopPropagation();
   getInputEl(t).value = v;
+  markUsed(v);
   closeDrop(t);
   updatePreview();
 }
@@ -867,6 +888,7 @@ function addSelDrop(t, v, e){
   if(t==='to'){ if(!clients.includes(v)) clients.push(v); showToast('✔ Client added!','gold'); }
   else { if(!partList.includes(v)) partList.push(v); showToast('✔ Particular added!','gold'); }
   getInputEl(t).value = v;
+  markUsed(v);
   closeDrop(t);
   updatePreview();
 }
@@ -874,6 +896,7 @@ function addNewItem(t){
   const inEl = document.getElementById(t==='to'?'newClientIn':'newPartIn');
   const v = inEl.value.trim();
   if(!v){ showToast('Enter a value first'); return; }
+  markUsed(v);
   if(t==='to'){
     if(!clients.includes(v)){ clients.push(v); showToast('✔ Client "'+v+'" added','gold'); }
     else showToast('Client already exists');
