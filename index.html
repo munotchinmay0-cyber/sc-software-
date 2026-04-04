@@ -836,27 +836,59 @@
       box-shadow: var(--shadow-sm);
     }
 
-    .t-header {
+    .t-header, .t-row {
       display: grid;
-      grid-template-columns: 62px 1.8fr 1.5fr 90px 100px 90px 110px 52px;
-      padding: 9px 15px;
-      background: var(--surface2);
-      border-bottom: 1px solid var(--border);
-      font-size: 10.5px;
-      font-weight: 600;
-      color: var(--ink-mute);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    .t-row {
-      display: grid;
-      grid-template-columns: 62px 1.8fr 1.5fr 90px 100px 90px 110px 52px;
-      padding: 11px 15px;
+      grid-template-columns: minmax(150px, 1.8fr) 1.5fr 90px 100px 85px 110px 85px;
+      padding: 10px 15px;
       border-bottom: 1px solid var(--border-light);
       align-items: center;
       transition: background 0.1s;
-      cursor: default;
+    }
+    .t-id-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+    .t-row .t-inv-no { 
+        font-size: 11px; 
+        opacity: 0.8; 
+        color: var(--ink-mute);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .t-row .t-company { 
+        font-size: 13px; 
+        font-weight: 700;
+        color: var(--ink);
+    }
+    .f-tab {
+        padding: 10px 22px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 10px;
+        border: 2px solid var(--border);
+        background: var(--surface);
+        color: var(--ink-soft);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .f-tab:hover, .f-tab.active {
+        border-color: var(--gold);
+        background: var(--gold-pale);
+        color: var(--gold-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(160, 120, 48, 0.1);
+    }
+    .brand-filter-row {
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+    /* Oversized style for brand tabs */
+    .f-tab-brand {
+        padding: 14px 30px;
+        font-size: 16px;
+        min-width: 140px;
     }
 
     .t-row:last-child {
@@ -1648,27 +1680,42 @@
       }
     }
 
-    @media(max-width:900px) {
-      .gen-layout {
-        grid-template-columns: 1fr;
-      }
+/* ===== INVOICE META GRID ===== */
+.meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.meta-grid-full {
+  grid-column: span 2;
+}
+.meta-icon-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.meta-icon-label span {
+  font-size: 12px;
+  color: var(--gold-mid);
+}
 
-      .stats-grid {
-        grid-template-columns: 1fr 1fr;
-      }
+/* ===== ENHANCED TRACKER ROW ===== */
+.t-row {
+  grid-template-columns: minmax(150px, 1.8fr) 1.5fr 90px 100px 85px 110px 85px; 
+}
+.t-header {
+  grid-template-columns: minmax(150px, 1.8fr) 1.5fr 90px 100px 85px 110px 85px;
+}
+.row-btn.delete {
+  border-color: #fee2e2;
+  color: #ef4444;
+}
+.row-btn.delete:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
 
-      .t-header,
-      .t-row {
-        grid-template-columns: 55px 1fr 85px 85px 50px;
-      }
-
-      .t-header>*:nth-child(3),
-      .t-row>*:nth-child(3),
-      .t-header>*:nth-child(7),
-      .t-row>*:nth-child(7) {
-        display: none;
-      }
-    }
+@media(max-width:900px){.gen-layout{grid-template-columns:1fr;}.stats-grid{grid-template-columns:1fr 1fr;}.t-header,.t-row{grid-template-columns:55px 1fr 85px 85px 50px;}.t-header>*:nth-child(3),.t-row>*:nth-child(3),.t-header>*:nth-child(7),.t-row>*:nth-child(7){display:none;}}
   </style>
 </head>
 
@@ -1714,13 +1761,23 @@
                 <div class="dropdown-list" id="toDrop"></div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Add New Client</label>
-              <div class="add-preset-row">
-                <input type="text" class="form-control" id="newClientIn" placeholder="Enter new client name…"
-                  style="font-size:13px;padding:7px 10px;">
-                <button type="button" class="add-preset-btn" onclick="addNewItem('to')">+ Add</button>
+            <div class="form-group" style="margin-top:12px; border-top:1px dashed var(--border); padding-top:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <label class="form-label" style="margin:0;">Client GSTIN (Bank / Search)</label>
+                <span id="gstStatusBadge" style="font-size:9px; color:var(--ink-mute);">Not Linked</span>
               </div>
+              <div class="select-wrapper" id="swGst">
+                <div class="search-input-wrap">
+                  <span class="search-icon-abs">🆔</span>
+                  <input type="text" class="s-input" id="newClientGstIn" placeholder="Type GSTIN to search or add…"
+                    autocomplete="off" oninput="filterDrop('gst')" onclick="openDrop('gst')"
+                    onkeydown="dropKey(event,'gst')" style="padding-left:35px;">
+                  <button type="button" class="add-preset-btn" onclick="saveClientGst()" style="position:absolute; right:30px; top:4px; height:24px; padding:0 8px; font-size:11px;">Link</button>
+                  <span class="s-chevron" id="gstChev" style="right:8px;">▼</span>
+                </div>
+                <div class="dropdown-list" id="gstDrop"></div>
+              </div>
+              <p style="font-size:10px; color:var(--ink-mute); margin-top:5px;">Search by GST digits or type new one then click 'Link'.</p>
             </div>
           </div>
         </div>
@@ -1792,16 +1849,26 @@
         <!-- INVOICE META -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">🗓 Invoice Details</div>
+            <div class="card-title">🧾 Invoice Details & Settings</div>
           </div>
           <div class="card-body">
-            <div class="meta-row">
+            <div class="meta-grid">
               <div class="form-group">
-                <label class="form-label">Invoice No.</label>
-                <input type="text" class="form-control" id="invNo" value="TCP/2025-26/KB 38" oninput="updatePreview()">
+                <label class="form-label meta-icon-label">🔖 GST Configuration</label>
+                <select class="form-control" id="gstType" onchange="updatePreview()">
+                  <option value="none">No GST (Bill of Supply)</option>
+                  <option value="cgst_sgst" selected>Tax Invoice (CGST+SGST 18%)</option>
+                  <option value="igst">Tax Invoice (IGST 18%)</option>
+                  <option value="exempt">Exempt / Nil Rated</option>
+                </select>
               </div>
               <div class="form-group">
-                <label class="form-label">Invoice Date</label>
+                <label class="form-label meta-icon-label">🔢 Invoice No.</label>
+                <input type="text" class="form-control" id="invNo" value="" oninput="updatePreview()" style="font-weight:700; color:var(--gold);">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label meta-icon-label">📅 Invoice Date</label>
                 <div class="date-picker-wrap" id="dpWrap">
                   <button type="button" class="date-display-btn" id="dpBtn" onclick="toggleCal()">
                     <span class="cal-icon">📅</span>
@@ -1812,13 +1879,12 @@
                 </div>
                 <input type="hidden" id="invDate">
               </div>
-            </div>
-            <div class="meta-row" style="margin-top:8px;">
+
               <div class="form-group">
-                <label class="form-label">Due Date (Optional)</label>
+                <label class="form-label meta-icon-label">🔔 Due Date (Optional)</label>
                 <div class="date-picker-wrap" id="dpDueWrap">
                   <button type="button" class="date-display-btn" id="dpDueBtn" onclick="toggleCal('due')">
-                    <span class="cal-icon">⏰</span>
+                    <span class="cal-icon">⏳</span>
                     <span class="date-val" id="dpDueDisplay">No due date</span>
                     <span style="font-size:10px;color:var(--ink-mute);">▼</span>
                   </button>
@@ -1826,27 +1892,34 @@
                 </div>
                 <input type="hidden" id="dueDate">
               </div>
+
               <div class="form-group">
-                <label class="form-label">Payment Mode</label>
-                <select class="form-control" id="payMode" oninput="updatePreview()" style="font-size:13px;">
-                  <option value="">— Any mode —</option>
+                <label class="form-label meta-icon-label">💳 Payment Method</label>
+                <select class="form-control" id="payMode" oninput="updatePreview()" style="font-size:13.5px;">
+                  <option value="">— Select Mode —</option>
+                  <option>UPI / PhonePe</option>
                   <option>Cheque</option>
                   <option>NEFT/RTGS</option>
-                  <option>UPI / PhonePe</option>
                   <option>Cash</option>
                   <option>DD</option>
                 </select>
               </div>
-            </div>
-            <div class="form-group" id="clientGstWrap" style="margin-top:8px; display:none;">
-              <label class="form-label">Client GSTIN (Optional)</label>
-              <input type="text" class="form-control" id="clientGstInput" placeholder="e.g. 27AAACN9456C1ZF"
-                oninput="updatePreview()">
-            </div>
-            <div class="form-group" style="margin-top:8px;">
-              <label class="form-label">Internal Notes (Optional)</label>
-              <textarea class="notes-field" id="invNotes" placeholder="e.g. Sent via email, follow-up on 5th…"
-                oninput="updatePreview()"></textarea>
+
+              <div class="form-group">
+                <label class="form-label meta-icon-label">📁 Category</label>
+                <select class="form-control" id="invCategory" style="font-size:13.5px;">
+                  <option value="Professional Fees">Professional Fees</option>
+                  <option value="Reimbursements">Reimbursements</option>
+                  <option value="Direct Expenses">Direct Expenses</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+
+              <div class="form-group meta-grid-full">
+                <label class="form-label meta-icon-label">📝 Internal Office Notes</label>
+                <textarea class="notes-field" id="invNotes" placeholder="Confidential notes for tracking purposes only…" oninput="updatePreview()"></textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -1994,24 +2067,31 @@
         </select>
       </div>
 
+      <!-- 🏦 BRAND SELECTOR (TCP, KB, PJA) -->
+      <div class="filter-row brand-filter-row">
+        <button class="f-tab f-tab-brand active" onclick="setBrandF('all',this)">🌎 All Brands</button>
+        <button class="f-tab f-tab-brand" onclick="setBrandF('TCP',this)">🏢 TCP</button>
+        <button class="f-tab f-tab-brand" onclick="setBrandF('KB',this)">👤 KB Bills</button>
+        <button class="f-tab f-tab-brand" onclick="setBrandF('PJA',this)">⚖️ PJA</button>
+      </div>
+
       <div class="filter-row">
-        <button class="f-tab active" onclick="setF('all',this)">All</button>
+        <button class="f-tab active" onclick="setF('all',this)">All Status</button>
         <button class="f-tab" onclick="setF('unpaid',this)">Unpaid</button>
         <button class="f-tab" onclick="setF('paid',this)">Paid</button>
         <button class="f-tab" onclick="setF('overdue',this)">Overdue (30d+)</button>
-        <button class="f-tab" onclick="setF('exported',this)">Exported Invoices</button>
+        <button class="f-tab" onclick="setF('exported',this)">Exported</button>
       </div>
 
       <div class="inv-table-wrap">
-        <div class="t-header">
-          <div>Inv No</div>
-          <div>Company</div>
+        <div class="t-header" style="text-transform:uppercase; font-size:10px; font-weight:700; height:32px;">
+          <div>Invoice & Company</div>
           <div>Particulars</div>
           <div>Date</div>
-          <div>Amount</div>
-          <div>Status</div>
-          <div>Days / Paid On</div>
-          <div>Action</div>
+          <div style="text-align:right">Amount</div>
+          <div style="text-align:center">Status</div>
+          <div style="text-align:center">Age/Paid On</div>
+          <div style="text-align:right">Actions</div>
         </div>
         <div id="tBody"></div>
       </div>
@@ -2236,14 +2316,42 @@
       { id: 'KB35', no: 'KB 35', date: '17.02.2026', to: 'VASUDHA WOODLESS CREMATION FOUNDATION', part: 'Towards Class 3 DSC Charges of Prashant Hartalkar Sir', amt: 2250, paid: false, paidDate: null, method: '', ref: '' }
     ];
 
-    let curFilter = 'all', pendId = null, dropFocus = { to: -1, part: -1 };
+    let curFilter = 'all', curBrandF = 'all', pendId = null, dropFocus = { to: -1, part: -1, gst: -1 };
     let calState = { month: new Date().getMonth(), year: new Date().getFullYear() };
     let calDueState = { month: new Date().getMonth(), year: new Date().getFullYear() };
+
+    // ============================================================
+    // DATA PERSISTENCE
+    // ============================================================
+    function saveToStorage() {
+      localStorage.setItem('kb_invoices', JSON.stringify(invoices));
+      localStorage.setItem('kb_clients', JSON.stringify(clients));
+      localStorage.setItem('kb_partList', JSON.stringify(partList));
+      localStorage.setItem('kb_presets', JSON.stringify(presets));
+      
+      const gstMappings = {};
+      invoices.forEach(inv => {
+        if(inv.to && inv.clientGst) gstMappings[inv.to] = inv.clientGst;
+      });
+      localStorage.setItem('kb_client_gstins', JSON.stringify(gstMappings));
+    }
+
+    function loadFromStorage() {
+      const storedInvs = localStorage.getItem('kb_invoices');
+      if(storedInvs) invoices = JSON.parse(storedInvs);
+      const storedClients = localStorage.getItem('kb_clients');
+      if(storedClients) clients = JSON.parse(storedClients);
+      const storedParts = localStorage.getItem('kb_partList');
+      if(storedParts) partList = JSON.parse(storedParts);
+      const storedPresets = localStorage.getItem('kb_presets');
+      if(storedPresets) presets = JSON.parse(storedPresets);
+    }
 
     // ============================================================
     // INIT
     // ============================================================
     window.onload = () => {
+      loadFromStorage();
       renderChips();
       // Init custom date picker to today
       const today = new Date();
@@ -2251,10 +2359,12 @@
       calState = { month: today.getMonth(), year: today.getFullYear() };
       calDueState = { month: today.getMonth(), year: today.getFullYear() };
       setBrand('TCP');
+      updatePreview();
       // Close dropdowns + calendars on outside click
       document.addEventListener('click', e => {
         if (!e.target.closest('#swTo')) closeDrop('to');
         if (!e.target.closest('#swPart')) closeDrop('part');
+        if (!e.target.closest('#swGst')) closeDrop('gst');
         if (!e.target.closest('#dpWrap')) closeCalendar('inv');
         if (!e.target.closest('#dpDueWrap')) closeCalendar('due');
       });
@@ -2299,33 +2409,51 @@
     // ============================================================
     // DROPDOWN — FULLY FIXED
     // ============================================================
-    function getList(t) { return t === 'to' ? clients : partList; }
-    function getInputEl(t) { return document.getElementById(t === 'to' ? 'toInput' : 'partInput'); }
-    function getDropEl(t) { return document.getElementById(t === 'to' ? 'toDrop' : 'partDrop'); }
-    function getChevEl(t) { return document.getElementById(t === 'to' ? 'toChev' : 'partChev'); }
+    function getList(t) { 
+        if (t === 'to') return clients;
+        if (t === 'part') return partList;
+        const gstMap = JSON.parse(localStorage.getItem('kb_client_gstins') || '{}');
+        return Object.values(gstMap).filter((v, i, a) => a.indexOf(v) === i); // Unique GSTs
+    }
+    function getInputEl(t) { return document.getElementById(t === 'to' ? 'toInput' : (t === 'part' ? 'partInput' : 'newClientGstIn')); }
+    function getDropEl(t) { return document.getElementById(t === 'to' ? 'toDrop' : (t === 'part' ? 'partDrop' : 'gstDrop')); }
+    function getChevEl(t) { return document.getElementById(t === 'to' ? 'toChev' : (t === 'part' ? 'partChev' : 'gstChev')); }
 
     function buildDropHTML(t) {
       const list = getList(t);
       const q = getInputEl(t).value.toLowerCase().trim();
       const filtered = q ? list.filter(x => x.toLowerCase().includes(q)) : list.slice();
 
-      filtered.sort((a, b) => {
-        const fA = usageFreq[a] || 0;
-        const fB = usageFreq[b] || 0;
-        if (fB !== fA) return fB - fA;
-        return a.localeCompare(b);
-      });
+      if (t !== 'gst') {
+        filtered.sort((a, b) => {
+          const fA = usageFreq[a] || 0;
+          const fB = usageFreq[b] || 0;
+          if (fB !== fA) return fB - fA;
+          return a.localeCompare(b);
+        });
+      }
 
       let html = '';
       filtered.forEach((x, i) => {
         const hl = q ? x.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<strong>$1</strong>') : x;
-        html += `<div class="drop-item" data-val="${x.replace(/"/g, '&quot;')}" onclick="selDrop('${t}','${x.replace(/'/g, "\\'")}',event)"><span>${hl}</span></div>`;
+        if (t === 'gst') {
+            const gstMap = JSON.parse(localStorage.getItem('kb_client_gstins') || '{}');
+            const clName = Object.keys(gstMap).find(k => gstMap[k] === x) || 'Saved GST';
+            html += `<div class="drop-item" data-val="${x}" onclick="selDrop('gst','${x}',event)">
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                    <span>${hl}</span>
+                    <span style="font-size:9px; color:var(--ink-mute); font-style:italic;">${clName.split(' ')[0]}</span>
+                </div>
+            </div>`;
+        } else {
+            html += `<div class="drop-item" data-val="${x.replace(/"/g, '&quot;')}" onclick="selDrop('${t}','${x.replace(/'/g, "\\'")}',event)"><span>${hl}</span></div>`;
+        }
       });
       const raw = getInputEl(t).value.trim();
-      if (raw && !list.some(x => x.toLowerCase() === raw.toLowerCase())) {
+      if (t !== 'gst' && raw && !list.some(x => x.toLowerCase() === raw.toLowerCase())) {
         html += `<div class="drop-item" onclick="addSelDrop('${t}','${raw.replace(/'/g, "\\'")}',event)">
-      <span>${raw}</span><span class="drop-add-tag">+ Add New</span>
-    </div>`;
+          <span>${raw}</span><span class="drop-add-tag">+ Add New</span>
+        </div>`;
       }
       if (!html) html = `<div class="drop-no-results">No results — type to add new</div>`;
       return html;
@@ -2354,12 +2482,35 @@
       getInputEl(t).value = v;
       markUsed(v);
       closeDrop(t);
+      
+      const gstMap = JSON.parse(localStorage.getItem('kb_client_gstins') || '{}');
+      if (t === 'to') {
+        const gstVal = gstMap[v] || '';
+        document.getElementById('newClientGstIn').value = gstVal;
+        const sBadge = document.getElementById('gstStatusBadge');
+        if (sBadge) {
+            sBadge.textContent = gstVal ? '✅ Linked' : '❌ Not Linked';
+            sBadge.style.color = gstVal ? 'var(--green)' : 'var(--ink-mute)';
+        }
+      } else if (t === 'gst') {
+        // Find if this GST is already linked to a client
+        const clName = Object.keys(gstMap).find(k => gstMap[k] === v);
+        if (clName && (document.getElementById('toInput').value === '' || document.getElementById('toInput').value === '—')) {
+            document.getElementById('toInput').value = clName;
+        }
+        const sBadge = document.getElementById('gstStatusBadge');
+        if (sBadge) {
+            sBadge.textContent = '✅ Linked';
+            sBadge.style.color = 'var(--green)';
+        }
+      }
+      
       updatePreview();
     }
     function addSelDrop(t, v, e) {
       if (e) e.stopPropagation();
-      if (t === 'to') { if (!clients.includes(v)) clients.push(v); showToast('✔ Client added!', 'gold'); }
-      else { if (!partList.includes(v)) partList.push(v); showToast('✔ Particular added!', 'gold'); }
+      if (t === 'to') { if (!clients.includes(v)) { clients.push(v); saveToStorage(); } showToast('✔ Client added!', 'gold'); }
+      else { if (!partList.includes(v)) { partList.push(v); saveToStorage(); } showToast('✔ Particular added!', 'gold'); }
       getInputEl(t).value = v;
       markUsed(v);
       closeDrop(t);
@@ -2371,15 +2522,45 @@
       if (!v) { showToast('Enter a value first'); return; }
       markUsed(v);
       if (t === 'to') {
-        if (!clients.includes(v)) { clients.push(v); showToast('✔ Client "' + v + '" added', 'gold'); }
+        if (!clients.includes(v)) { 
+          clients.push(v); 
+          saveToStorage();
+          showToast('✔ Client "' + v + '" added', 'gold'); 
+        }
         else showToast('Client already exists');
         document.getElementById('toInput').value = v;
+        document.getElementById('newClientGstIn').value = '';
+        const sBadge = document.getElementById('gstStatusBadge');
+        if (sBadge) sBadge.textContent = '❌ Not Linked';
       } else {
-        if (!partList.includes(v)) { partList.push(v); showToast('✔ Particular added', 'gold'); }
+        if (!partList.includes(v)) { 
+          partList.push(v); 
+          saveToStorage();
+          showToast('✔ Particular added', 'gold'); 
+        }
         else showToast('Already in list');
         document.getElementById('partInput').value = v;
       }
       inEl.value = '';
+      updatePreview();
+    }
+
+    function saveClientGst() {
+      const clientName = document.getElementById('toInput').value.trim();
+      const gstVal = document.getElementById('newClientGstIn').value.trim();
+      if (!clientName || clientName === '—') { showToast('⚠ Select a client first'); return; }
+      if (!gstVal) { showToast('⚠ Enter GSTIN to link'); return; }
+
+      const gstMap = JSON.parse(localStorage.getItem('kb_client_gstins') || '{}');
+      gstMap[clientName] = gstVal;
+      localStorage.setItem('kb_client_gstins', JSON.stringify(gstMap));
+      
+      const sBadge = document.getElementById('gstStatusBadge');
+      if (sBadge) {
+          sBadge.textContent = '✅ Linked';
+          sBadge.style.color = 'var(--green)';
+      }
+      showToast('✔ GSTIN linked to ' + clientName, 'gold');
       updatePreview();
     }
 
@@ -2417,15 +2598,16 @@
       const no = document.getElementById('invNo').value.trim() || '—';
       const dv = document.getElementById('invDate').value;
       const mode = (document.getElementById('payMode') || {}).value || '';
+      const gstType = document.getElementById('gstType').value;
 
       document.getElementById('prevNo').textContent = no;
       document.getElementById('prevDate').textContent = dv ? fmtDate(dv) : '—';
       document.getElementById('prevTo').textContent = to;
 
       // Client GST
-      const clientGst = document.getElementById('clientGstInput').value.trim();
+      const clientGst = document.getElementById('newClientGstIn').value.trim();
       const cgEl = document.getElementById('prevClientGst');
-      if (BRANDS[currentBrand].hasGstOptions && clientGst) {
+      if (clientGst) {
         cgEl.textContent = 'GST NO : ' + clientGst;
         cgEl.style.display = 'block';
       } else {
@@ -2433,10 +2615,9 @@
       }
 
       // Handle GST amounts
-      const applyGst = BRANDS[currentBrand].hasGstOptions && document.getElementById('applyGst').checked;
       let tbodyObj = document.getElementById('prevTbody');
 
-      if (applyGst && amt > 0) {
+      if (gstType === 'cgst_sgst' && amt > 0) {
         const gstAmt = amt * 0.09;
         const total = amt + (gstAmt * 2);
         tbodyObj.innerHTML = `
@@ -2447,6 +2628,16 @@
      `;
         document.getElementById('prevWords').textContent = '(' + n2w(total) + ')';
         document.prevTotalAmt = total; // stored for excel/save
+      } else if (gstType === 'igst' && amt > 0) {
+        const igstAmt = amt * 0.18;
+        const total = amt + igstAmt;
+        tbodyObj.innerHTML = `
+        <tr><td>${part}</td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+        <tr><td>Add: Integrated Goods & Services Tax (IGST) @18%</td><td style="text-align:right;">₹${igstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+        <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+     `;
+        document.getElementById('prevWords').textContent = '(' + n2w(total) + ')';
+        document.prevTotalAmt = total;
       } else {
         tbodyObj.innerHTML = `
         <tr><td>${part}</td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
@@ -2501,6 +2692,9 @@
       const due = (document.getElementById('dueDate') || {}).value || '';
       const notes = (document.getElementById('invNotes') || {}).value || '';
       const mode = (document.getElementById('payMode') || {}).value || '';
+      const clientGst = document.getElementById('newClientGstIn').value.trim();
+      const gstType = document.getElementById('gstType').value;
+      
       if (!to) { showToast('⚠ Select or enter a client'); return; }
       if (!part) { showToast('⚠ Enter particulars'); return; }
       if (!amt) { showToast('⚠ Enter an amount'); return; }
@@ -2512,18 +2706,30 @@
         if (isExported === true) existing.exported = true;
         // update fields
         existing.to = to; existing.part = part; existing.amt = amt; existing.notes = notes;
+        existing.clientGst = clientGst; existing.gstType = gstType;
       } else {
-        invoices.push({ id: 'KB' + Date.now(), no, date: fmtDate(dv), to, part, amt, paid: false, paidDate: null, method: '', ref: '', dueDate: due ? fmtDate(due) : '', notes, payMode: mode, exported: !!isExported, brand: currentBrand });
+        invoices.push({ id: 'KB' + Date.now(), no, date: fmtDate(dv), to, part, amt, paid: false, paidDate: null, method: '', ref: '', dueDate: due ? fmtDate(due) : '', notes, payMode: mode, exported: !!isExported, brand: currentBrand, clientGst, gstType });
       }
+
+      saveToStorage();
 
       if (clearForm && !isExported) {
         document.getElementById('toInput').value = '';
         document.getElementById('partInput').value = '';
         document.getElementById('amtInput').value = '';
-        document.getElementById('clientGstInput').value = '';
+        document.getElementById('newClientGstIn').value = '';
+        const sBadge = document.getElementById('gstStatusBadge');
+        if (sBadge) {
+            sBadge.textContent = 'Not Linked';
+            sBadge.style.color = 'var(--ink-mute)';
+        }
         if (document.getElementById('invNotes')) document.getElementById('invNotes').value = '';
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        document.getElementById('invNo').value = BRANDS[currentBrand].prefix + '2025-26/' + (invoices.length + 1);
+        
+        // Auto increment logic (keep current brand prefix)
+        const bd = BRANDS[currentBrand];
+        const nextNo = invoices.filter(i=>i.brand===currentBrand).length + 1;
+        document.getElementById('invNo').value = bd.prefix + '2025-26/' + nextNo;
 
         const today = new Date();
         setCalDate('inv', today.getFullYear(), today.getMonth(), today.getDate());
@@ -2553,7 +2759,7 @@
       const baseAmt = parseFloat(document.getElementById('amtInput').value) || 0;
       const applyGst = bd.hasGstOptions && document.getElementById('applyGst').checked;
       const totalAmt = document.prevTotalAmt || baseAmt;
-      const clientGst = document.getElementById('clientGstInput').value.trim();
+      const clientGst = document.getElementById('newClientGstIn').value.trim();
 
       const no = document.getElementById('invNo').value.trim() || '';
       const dv = document.getElementById('invDate').value;
@@ -2570,24 +2776,27 @@
       const wb = new ExcelJS.Workbook();
       const ws = wb.addWorksheet('Invoice');
 
-      ws.columns = [{ width: 62 }, { width: 22 }];
+      // WIDENED COLUMNS for better fit
+      ws.columns = [{ width: 55 }, { width: 28 }];
 
       function styleCell(cell, bold, size, align, wrap, border, rgb) {
         cell.font = { name: 'Cambria', bold: bold, size: size || 12, color: rgb ? { argb: 'FF' + rgb } : { argb: 'FF000000' } };
-        cell.alignment = { horizontal: align || 'left', vertical: 'middle', wrapText: !!wrap };
+        cell.alignment = { horizontal: align || 'left', vertical: 'top', wrapText: !!wrap }; 
         if (border) {
           cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
         }
       }
 
-      for (let i = 1; i <= 30; i++) ws.getRow(i).height = 18;
+      // Default height
+      for (let i = 1; i <= 50; i++) ws.getRow(i).height = 20;
 
       ws.mergeCells('A1:B1');
-      const a1 = ws.getCell('A1'); a1.value = bd.name; styleCell(a1, true, 15, 'center');
-      ws.getRow(1).height = 28;
+      const a1 = ws.getCell('A1'); a1.value = bd.name; styleCell(a1, true, 16, 'center');
+      ws.getRow(1).height = 32;
 
       ws.mergeCells('A2:B2');
-      const a2 = ws.getCell('A2'); a2.value = bd.addr.replace(/&nbsp;/g, ' ').replace(/<br>/g, ', '); styleCell(a2, false, 12, 'center');
+      const a2 = ws.getCell('A2'); a2.value = bd.addr.replace(/&nbsp;/g, ' ').replace(/<br>/g, ', '); styleCell(a2, false, 11, 'center', true);
+      ws.getRow(2).height = 28;
 
       ws.mergeCells('A4:B4');
       const a4 = ws.getCell('A4'); a4.value = bd.pan; styleCell(a4, false, 11, 'left');
@@ -2596,20 +2805,30 @@
       ws.getCell('B6').value = 'Date: ' + ds; styleCell(ws.getCell('B6'), false, 12, 'right');
 
       ws.mergeCells('A8:B8');
-      const a8 = ws.getCell('A8'); a8.value = bd.title; styleCell(a8, true, 13, 'center');
+      const a8 = ws.getCell('A8'); a8.value = bd.title; styleCell(a8, true, 14, 'center');
 
       ws.getCell('A10').value = bd.toLabel; styleCell(ws.getCell('A10'), false, 12, 'left');
-      ws.getCell('A11').value = to; styleCell(ws.getCell('A11'), true, 12, 'left');
+      ws.mergeCells('A11:B11');
+      const a11 = ws.getCell('A11'); a11.value = to; styleCell(a11, true, 13, 'left', true);
+      ws.getRow(11).height = 24;
 
       let gRow = 14;
       if (clientGst && bd.hasGstOptions) {
         ws.getCell('A12').value = 'GST NO : ' + clientGst; styleCell(ws.getCell('A12'), true, 11, 'left');
+        gRow = 14;
+      } else {
+        gRow = 13;
       }
 
-      ws.getCell('A' + gRow).value = bd.greeting.replace(/<br>/g, '\n'); styleCell(ws.getCell('A' + gRow), false, 12, 'left', true);
-      ws.getRow(gRow).height = 40;
+      ws.mergeCells('A' + gRow + ':B' + gRow);
+      const aGreet = ws.getCell('A' + gRow); 
+      aGreet.value = bd.greeting.replace(/<br>/g, '\n'); 
+      styleCell(aGreet, false, 11, 'left', true);
+      // AUTORowHeight logic: 22 units per ~60 chars
+      const greetText = aGreet.value || "";
+      ws.getRow(gRow).height = Math.max(45, (greetText.length / 70) * 18);
 
-      let tRow = gRow + 3;
+      let tRow = gRow + 2;
       ws.getCell('A' + tRow).value = 'Particulars'; styleCell(ws.getCell('A' + tRow), true, 12, 'left', false, true);
       ws.getCell('B' + tRow).value = 'Amount (₹)'; styleCell(ws.getCell('B' + tRow), true, 12, 'right', false, true);
 
@@ -2617,17 +2836,18 @@
       ws.getCell('A' + tRow).value = part; styleCell(ws.getCell('A' + tRow), false, 12, 'left', true, true);
       ws.getCell('B' + tRow).value = baseAmt; styleCell(ws.getCell('B' + tRow), false, 12, 'right', false, true);
       ws.getCell('B' + tRow).numFmt = '#,##0.00';
-      ws.getRow(tRow).height = 40;
+      const partText = part || "";
+      ws.getRow(tRow).height = Math.max(30, (partText.length / 60) * 18);
 
       if (applyGst && baseAmt > 0) {
         const gstAmt = baseAmt * 0.09;
         tRow++;
-        ws.getCell('A' + tRow).value = 'Add: Central Goods & Services Tax (CGST) @9%'; styleCell(ws.getCell('A' + tRow), false, 12, 'left', false, true);
+        ws.getCell('A' + tRow).value = 'Add: Central Goods & Services Tax (CGST) @9%'; styleCell(ws.getCell('A' + tRow), false, 11, 'left', false, true);
         ws.getCell('B' + tRow).value = gstAmt; styleCell(ws.getCell('B' + tRow), false, 12, 'right', false, true);
         ws.getCell('B' + tRow).numFmt = '#,##0.00';
 
         tRow++;
-        ws.getCell('A' + tRow).value = 'Add: State Goods & Services Tax (SGST) @9%'; styleCell(ws.getCell('A' + tRow), false, 12, 'left', false, true);
+        ws.getCell('A' + tRow).value = 'Add: State Goods & Services Tax (SGST) @9%'; styleCell(ws.getCell('A' + tRow), false, 11, 'left', false, true);
         ws.getCell('B' + tRow).value = gstAmt; styleCell(ws.getCell('B' + tRow), false, 12, 'right', false, true);
         ws.getCell('B' + tRow).numFmt = '#,##0.00';
       }
@@ -2639,19 +2859,22 @@
 
       tRow += 2;
       ws.mergeCells('A' + tRow + ':B' + tRow);
-      const aW = ws.getCell('A' + tRow); aW.value = '(' + n2w(totalAmt) + ')'; styleCell(aW, true, 12, 'left');
+      const aW = ws.getCell('A' + tRow); aW.value = '(' + n2w(totalAmt) + ')'; styleCell(aW, true, 11.5, 'left', true);
+      ws.getRow(tRow).height = 24;
 
       tRow += 3;
       const rawSign = bd.signBox.replace(/<strong>|<\/strong>|<div.*?>|<\/div>/g, '').replace(/<br>/g, '\n').replace(/—/g, '\n');
-      ws.getCell('A' + tRow).value = rawSign; styleCell(ws.getCell('A' + tRow), true, 12, 'left', true);
-      ws.getRow(tRow).height = 50;
+      ws.mergeCells('A' + tRow + ':B' + (tRow+1)); // Expand sign box for visibility
+      const aS = ws.getCell('A' + tRow); aS.value = rawSign; styleCell(aS, true, 12, 'left', true);
+      ws.getRow(tRow).height = 60;
 
       tRow += 3;
-      ws.mergeCells('A' + tRow + ':B' + tRow);
-      const aB = ws.getCell('A' + tRow); aB.value = bd.bank.replace(/<strong>|<\/strong>/gi, '').replace(/<br>/gi, ' | '); styleCell(aB, true, 11, 'left', true);
-      ws.getRow(tRow).height = 30;
+      ws.mergeCells('A' + tRow + ':B' + (tRow+1));
+      const aB = ws.getCell('A' + tRow); aB.value = bd.bank.replace(/<strong>|<\/strong>/gi, '').replace(/<br>/gi, ' | '); styleCell(aB, true, 10.5, 'left', true);
+      aB.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      ws.getRow(tRow).height = 40;
 
-      tRow += 2;
+      tRow += 3;
       const showQr = !mode || mode.toLowerCase().includes('upi') || mode.toLowerCase().includes('phonepe');
 
       if (showQr) {
@@ -2677,23 +2900,21 @@
           });
 
           if (currentBrand === 'TCP') {
-            // TCP QR Block is a vertical professional strip
             ws.addImage(imageId, {
-              tl: { col: 0.45, row: tRow + 0.2 },
-              ext: { width: 240, height: 600 }
+               tl: { col: 0.15, row: tRow + 0.3 }, 
+               ext: { width: 330, height: 600 } 
             });
-            tRow += 12;
+            tRow += 8;
           } else {
-            // KB/Standard centered QR
             ws.addImage(imageId, {
-              tl: { col: 0.35, row: tRow + 0.3 },
-              ext: { width: 320, height: 320 }
+               tl: { col: 0.25, row: tRow + 0.3 },
+               ext: { width: 320, height: 320 }
             });
             tRow++;
-            ws.getRow(tRow).height = 230;
-            tRow += 2;
+            ws.getRow(tRow).height = 235;
           }
         }
+        tRow += 2;
       } else {
         tRow += 5;
       }
@@ -2701,7 +2922,8 @@
       const notes = (document.getElementById('invNotes') || {}).value || '';
       if (notes) {
         ws.mergeCells(`A${tRow}:B${tRow}`);
-        const aNotes = ws.getCell(`A${tRow}`); aNotes.value = 'Note: ' + notes; styleCell(aNotes, false, 11, 'left');
+        const aNotes = ws.getCell(`A${tRow}`); aNotes.value = 'Note: ' + notes; styleCell(aNotes, false, 11, 'left', true);
+        ws.getRow(tRow).height = 30;
       }
 
       const buffer = await wb.xlsx.writeBuffer();
@@ -2877,17 +3099,51 @@ if __name__ == '__main__':
     // TRACKER
     // ============================================================
     function renderTracker() { renderStats(); renderRows(); renderCharts(); }
-
     function renderStats() {
       const tot = invoices.reduce((s, i) => s + i.amt, 0);
       const paid = invoices.filter(i => i.paid).reduce((s, i) => s + i.amt, 0);
       const pc = invoices.filter(i => i.paid).length;
       const ov = invoices.filter(i => !i.paid && daysSince(i.date) > 30).length;
+      const gstMap = JSON.parse(localStorage.getItem('kb_client_gstins') || '{}');
+      const savedGstCount = Object.keys(gstMap).length;
+
       document.getElementById('statsGrid').innerHTML = `
     <div class="stat-box"><div class="stat-label">Total Invoices</div><div class="stat-val">${invoices.length}</div><div class="stat-sub">FY 2025–26</div></div>
-    <div class="stat-box"><div class="stat-label">Total Billed</div><div class="stat-val gold">₹${(tot / 1000).toFixed(1)}K</div><div class="stat-sub">₹${tot.toLocaleString('en-IN')}</div></div>
+    <div class="stat-box"><div class="stat-label">GST Bank</div><div class="stat-val blue">${savedGstCount}</div><div class="stat-sub">Linked GSTINs</div></div>
     <div class="stat-box"><div class="stat-label">Received (${pc})</div><div class="stat-val green">₹${(paid / 1000).toFixed(1)}K</div><div class="stat-sub">₹${paid.toLocaleString('en-IN')}</div></div>
     <div class="stat-box"><div class="stat-label">Pending (${invoices.length - pc})</div><div class="stat-val red">₹${((tot - paid) / 1000).toFixed(1)}K</div><div class="stat-sub">${ov} overdue 30d+</div></div>`;
+
+      // Add a sidebar section for GST Bank if it doesn't exist
+      let bankEl = document.getElementById('gstBankList');
+      if (!bankEl) {
+        const sidePanel = document.querySelector('.tracker-container');
+        if (sidePanel) {
+            const bankArea = document.createElement('div');
+            bankArea.style.marginTop = '20px';
+            bankArea.style.padding = '15px';
+            bankArea.style.background = 'var(--surface-sub)';
+            bankArea.style.borderRadius = '12px';
+            bankArea.style.border = '1px solid var(--border)';
+            bankArea.innerHTML = `
+                <div style="font-weight:600; font-size:13px; color:var(--gold); margin-bottom:10px; display:flex; justify-content:space-between;">
+                    <span>🏦 GST Bank</span>
+                    <span style="font-size:10px; opacity:0.7;">Quick View</span>
+                </div>
+                <div id="gstBankList" style="max-height:150px; overflow-y:auto; font-size:11px;"></div>
+            `;
+            sidePanel.prepend(bankArea);
+            bankEl = document.getElementById('gstBankList');
+        }
+      }
+      if (bankEl) {
+          const sortedGsts = Object.keys(gstMap).sort().slice(0, 15);
+          bankEl.innerHTML = sortedGsts.map(k => `
+            <div style="padding:6px 0; border-bottom:1px solid var(--border-soft); display:flex; justify-content:space-between;">
+                <span style="color:var(--ink-soft); font-weight:500;">${k.length > 15 ? k.substring(0,12)+'...' : k}</span>
+                <span style="color:var(--gold); font-family:monospace;">${gstMap[k]}</span>
+            </div>
+          `).join('') || '<div style="text-align:center; padding:10px; opacity:0.5;">No GSTINs saved yet.</div>';
+      }
     }
 
     function renderRows() {
@@ -2896,15 +3152,22 @@ if __name__ == '__main__':
       const today = new Date();
 
       let f = invoices.filter(i => {
+        // Status Filter
         const mf = curFilter === 'all' ||
           (curFilter === 'paid' && i.paid) ||
           (curFilter === 'unpaid' && !i.paid) ||
           (curFilter === 'overdue' && !i.paid && daysSince(i.date) > 30) ||
           (curFilter === 'exported' && i.exported);
+        
+        // Brand Filter (Cumulative)
+        const bf = curBrandF === 'all' || i.brand === curBrandF;
+
+        // Search Filter
         const ms = !q || i.no.toLowerCase().includes(q) || i.to.toLowerCase().includes(q) ||
           String(i.amt).includes(q) || i.part.toLowerCase().includes(q) ||
           (i.paidDate || '').toLowerCase().includes(q);
-        return mf && ms;
+          
+        return mf && bf && ms;
       });
 
       f.sort((a, b) => {
@@ -2928,16 +3191,18 @@ if __name__ == '__main__':
           ? `<span class="days-badge${dc > 30 ? ' late' : ''}">${dc}d</span>${inv.paidDate ? `<div style="font-size:10px;color:var(--ink-mute);margin-top:2px;">${inv.paidDate}${inv.method ? ' · ' + inv.method : ''}</div>` : ''}`
           : (isOverdue ? `<span class="days-badge late">${daysSince(inv.date)}d old</span>` : `<span style="font-size:11px;color:var(--ink-mute);">—</span>`);
         return `<div class="t-row">
-      <div class="t-inv-no">${inv.no}</div>
-      <div><div class="t-company">${inv.to}</div></div>
+      <div class="t-id-group">
+        <div class="t-inv-no">${inv.no}</div>
+        <div class="t-company">${inv.to}</div>
+      </div>
       <div class="t-part" title="${inv.part}">${inv.part}</div>
       <div class="t-date">${inv.date}</div>
-      <div class="t-amt">₹${inv.amt.toLocaleString('en-IN')}</div>
-      <div class="status-cell">
+      <div class="t-amt" style="text-align:right">₹${inv.amt.toLocaleString('en-IN')}</div>
+      <div class="status-cell" style="justify-content:center">
         <button class="toggle-btn${inv.paid ? ' on' : ''}" onclick="togPaid('${inv.id}',event)"></button>
         <span class="s-text ${inv.paid ? 'paid' : 'unpaid'}">${inv.paid ? 'Paid' : 'Unpaid'}</span>
       </div>
-      <div>${dh}</div>
+      <div style="text-align:center">${dh}</div>
       <div class="row-action">
         <button class="row-btn" onclick="reGenInv('${inv.id}')" title="Regenerate Invoice">↗</button>
         <button class="row-btn" onclick="deleteInv('${inv.id}')" title="Delete Invoice" style="color:var(--red); border-color:var(--red-bg);">🗑</button>
@@ -2947,11 +3212,11 @@ if __name__ == '__main__':
     }
 
     function deleteInv(id) {
-      if (confirm('Are you sure you want to delete this invoice?')) {
-        invoices = invoices.filter(i => i.id !== id);
-        renderTracker();
-        showToast('Invoice deleted', 'gold');
-      }
+      if (!confirm('Are you sure you want to delete this invoice? This action is permanent.')) return;
+      invoices = invoices.filter(i => i.id !== id);
+      saveToStorage();
+      renderTracker();
+      showToast('🗑 Invoice deleted', 'gold');
     }
 
     let trendCt = null, statusCt = null;
@@ -3041,6 +3306,7 @@ if __name__ == '__main__':
       const inv = invoices.find(i => i.id === id); if (!inv) return;
       if (inv.paid) {
         inv.paid = false; inv.paidDate = null; inv.method = ''; inv.ref = '';
+        saveToStorage();
         renderTracker(); showToast('Marked as unpaid');
       } else {
         pendId = id;
@@ -3059,12 +3325,22 @@ if __name__ == '__main__':
       inv.paidDate = dv ? fmtDate(dv) : fmtDate(new Date().toISOString().split('T')[0]);
       inv.method = document.getElementById('mMethod').value;
       inv.ref = document.getElementById('mRef').value;
+      saveToStorage();
       closeM(); renderTracker(); showToast('✔ Payment recorded!', 'green');
     }
 
     function setF(f, btn) {
       curFilter = f;
-      document.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
+      const row = btn.parentNode;
+      row.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderRows();
+    }
+    
+    function setBrandF(b, btn) {
+      curBrandF = b;
+      const row = btn.parentNode;
+      row.querySelectorAll('.f-tab').forEach(t => t.classList.remove('active'));
       btn.classList.add('active');
       renderRows();
     }
