@@ -1827,6 +1827,19 @@
                                 <div class="dropdown-list" id="toDrop"></div>
                             </div>
                         </div>
+
+                        <!-- ADD NEW CLIENT (REQUESTED) -->
+                        <div class="form-group" style="margin: 15px 0; padding: 12px; background: var(--blue-bg); border-radius: 8px; border: 1px dashed var(--blue);">
+                            <label class="form-label" style="color: var(--blue);">👤 Add New Client to Library</label>
+                            <div class="add-preset-row">
+                                <input type="text" class="form-control" id="newClientIn"
+                                    placeholder="Enter new client name..."
+                                    style="font-size:13px; padding:7px 10px; border-color: var(--blue-bg);"
+                                    onkeydown="if(event.key==='Enter') addNewItem('to')">
+                                <button type="button" class="add-preset-btn" style="background:var(--blue); color:white; border:none;" onclick="addNewItem('to')">+ Add</button>
+                            </div>
+                        </div>
+
                         <div class="form-group"
                             style="margin-top:12px; border-top:1px dashed var(--border); padding-top:12px;">
                             <div
@@ -2156,8 +2169,18 @@
                 </div>
             </div>
 
-            <div class="export-strip">
-                <span class="export-label">📊 Export & Import your records</span>
+            <div class="export-strip" style="flex-wrap: wrap; gap: 15px;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="export-label" style="margin:0;">📊 Records</span>
+                    <!-- DATE SEARCH (REQUESTED) -->
+                    <div style="display:flex; align-items:center; gap:6px; padding:4px 10px; background:var(--surface); border:1px solid var(--border); border-radius:20px;">
+                        <span style="font-size:10px; font-weight:700; color:var(--ink-mute); text-transform:uppercase;">Search by Date:</span>
+                        <input type="date" id="tDateStart" class="form-control" style="width:115px; height:24px; padding:0 5px; font-size:11px; border:none; background:transparent;" onchange="renderRows()">
+                        <span style="font-size:10px; font-weight:700; color:var(--ink-mute); text-transform:uppercase; margin-left:4px;">to</span>
+                        <input type="date" id="tDateEnd" class="form-control" style="width:115px; height:24px; padding:0 5px; font-size:11px; border:none; background:transparent;" onchange="renderRows()">
+                        <button type="button" onclick="clearDateFilter()" style="border:none; background:none; color:var(--red); font-size:14px; cursor:pointer; padding:0 5px; display:flex; align-items:center;" title="Clear Filter">✕</button>
+                    </div>
+                </div>
                 <div class="export-btns">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="exportAllCSV()">⬇ Export
                         CSV</button>
@@ -2351,7 +2374,7 @@
                 signBox: "S/d—<strong>Authorised Signatory</strong><div style=\"margin-top:2px;font-size:10px;\">For Kashmira Rakesh Bhange</div>",
                 hasGstOptions: false,
                 hasQR: true,
-                prefix: "TCP/"
+                prefix: "KB/"
             },
             TCP: {
                 name: "THE CORPORATE PROFESSIONALS",
@@ -2721,25 +2744,31 @@
             updatePreview();
         }
         function addNewItem(t) {
-            // Check for correct ID based on which section is active
-            let inEl = document.getElementById(t === 'to' ? 'newClientIn' : 'newPartIn');
-            // If we are in the standard part section, the ID might be pjaNewPartLibrary (corrected above)
-            if (t === 'part' && (!inEl || inEl.value === undefined)) {
-                inEl = document.getElementById('pjaNewPartLibrary');
+            let inEl;
+            if (t === 'to') {
+                inEl = document.getElementById('newClientIn');
+            } else {
+                if (BRANDS[currentBrand].hasMultiParticulars) {
+                    inEl = document.getElementById('newPartIn');
+                } else {
+                    inEl = document.getElementById('pjaNewPartLibrary');
+                }
             }
             
-            const v = inEl ? inEl.value.trim() : "";
+            if (!inEl) return;
+            const v = inEl.value.trim();
+            if (!v) { showToast('⚠ Enter a name first', 'red'); return; }
+
             if (t === 'to') {
                 if (!clients.includes(v)) {
                     clients.push(v);
                     saveToStorage();
                     showToast('✔ Client "' + v + '" added', 'gold');
-                }
-                else showToast('Client already exists');
-                
-                if(!BRANDS[currentBrand].hasMultiParticulars) {
+                    inEl.value = '';
                     document.getElementById('toInput').value = v;
+                    updatePreview();
                 }
+                else showToast('Client already exists', 'red');
             } else {
                 if (!partList.includes(v)) {
                     partList.push(v);
@@ -2768,6 +2797,14 @@
                 document.getElementById('partInput').value = '';
             }
             updatePreview();
+        }
+
+        function clearDateFilter() {
+            const sd = document.getElementById('tDateStart');
+            const ed = document.getElementById('tDateEnd');
+            if (sd) sd.value = '';
+            if (ed) ed.value = '';
+            renderTracker(); 
         }
 
         function toggleDrop(t, e) {
@@ -3116,7 +3153,7 @@
                 existing.clientGst = clientGst; existing.gstType = gstType;
                 if (bd.hasMultiParticulars) existing.pjaRows = JSON.stringify(pjaRows);
             } else {
-                invoices.push({ id: 'KB' + Date.now(), no, date: fmtDate(dv), to, part, amt, paid: false, paidDate: null, method: '', ref: '', dueDate: due ? fmtDate(due) : '', notes, payMode: mode, exported: !!isExported, brand: currentBrand, clientGst, gstType, pjaRows: bd.hasMultiParticulars ? JSON.stringify(pjaRows) : '' });
+                invoices.push({ id: currentBrand + '-' + Date.now(), no, date: fmtDate(dv), to, part, amt, paid: false, paidDate: null, method: '', ref: '', dueDate: due ? fmtDate(due) : '', notes, payMode: mode, exported: !!isExported, brand: currentBrand, clientGst, gstType, pjaRows: bd.hasMultiParticulars ? JSON.stringify(pjaRows) : '' });
             }
 
             saveToStorage();
@@ -3134,6 +3171,13 @@
                 if (document.getElementById('invNotes')) document.getElementById('invNotes').value = '';
                 document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
 
+                // PJA Reset
+                if (bd.hasMultiParticulars) {
+                    pjaRows = [];
+                    renderPjaRows();
+                }
+                document.prevTotalAmt = 0;
+
                 // Auto increment logic (keep current brand prefix)
                 const nextNo = invoices.filter(i => i.brand === currentBrand).length + 1;
                 const seq = String(nextNo).padStart(3, '0');
@@ -3146,6 +3190,7 @@
                 document.getElementById('dpDueBtn').classList.remove('open');
                 if (document.getElementById('payMode')) document.getElementById('payMode').value = '';
                 updatePreview();
+                renderRows();
                 showToast('✔ Invoice saved successfully!', 'green');
             }
         }
@@ -3612,12 +3657,36 @@ if __name__ == '__main__':
                     String(i.amt).includes(q) || i.part.toLowerCase().includes(q) ||
                     (i.paidDate || '').toLowerCase().includes(q);
 
-                return mf && bf && ms;
+                // Date Range Filter
+                const ds = document.getElementById('tDateStart').value;
+                const de = document.getElementById('tDateEnd').value;
+                let df = true;
+                if (ds || de) {
+                    const idate = parseD(i.date);
+                    if (ds) {
+                        const start = new Date(ds).getTime();
+                        if (idate < start) df = false;
+                    }
+                    if (de) {
+                        const end = new Date(de).setHours(23, 59, 59, 999);
+                        if (idate > end) df = false;
+                    }
+                }
+
+                return mf && bf && ms && df;
             });
 
             f.sort((a, b) => {
-                if (srt === 'date-desc') return parseD(b.date) - parseD(a.date);
-                if (srt === 'date-asc') return parseD(a.date) - parseD(b.date);
+                if (srt === 'date-desc') {
+                    const diff = parseD(b.date) - parseD(a.date);
+                    if (diff !== 0) return diff;
+                    return b.id.localeCompare(a.id); // Second sort: Newest ID first
+                }
+                if (srt === 'date-asc') {
+                    const diff = parseD(a.date) - parseD(b.date);
+                    if (diff !== 0) return diff;
+                    return a.id.localeCompare(b.id); // Second sort: Oldest ID first
+                }
                 if (srt === 'amt-desc') return b.amt - a.amt;
                 if (srt === 'amt-asc') return a.amt - b.amt;
                 if (srt === 'alpha') return a.to.localeCompare(b.to);
@@ -3675,7 +3744,18 @@ if __name__ == '__main__':
                 const mf = curFilter === 'all' || (curFilter === 'paid' && i.paid) || (curFilter === 'unpaid' && !i.paid) || (curFilter === 'overdue' && !i.paid && daysSince(i.date) > 30) || (curFilter === 'exported' && i.exported);
                 const bf = curBrandF === 'all' || i.brand === curBrandF;
                 const ms = !q || i.no.toLowerCase().includes(q) || i.to.toLowerCase().includes(q) || String(i.amt).includes(q) || i.part.toLowerCase().includes(q);
-                return mf && bf && ms;
+                
+                // Date Range Filter
+                const ds = document.getElementById('tDateStart').value;
+                const de = document.getElementById('tDateEnd').value;
+                let df = true;
+                if (ds || de) {
+                    const idate = parseD(i.date);
+                    if (ds) { const start = new Date(ds).getTime(); if (idate < start) df = false; }
+                    if (de) { const end = new Date(de).setHours(23, 59, 59, 999); if (idate > end) df = false; }
+                }
+
+                return mf && bf && ms && df;
             });
             selectedInvIds = checked ? f.map(i => i.id) : [];
             renderRows();
