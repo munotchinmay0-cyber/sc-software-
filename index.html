@@ -580,14 +580,15 @@
         }
 
         .inv-table th {
-            background: var(--ink);
-            color: white;
+            border: 1px solid var(--ink);
+            background: white;
+            color: var(--ink);
             padding: 7px 10px;
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             letter-spacing: 0.4px;
             text-align: left;
-            text-transform: uppercase;
+            text-transform: capitalize;
         }
 
         .inv-table th:last-child {
@@ -597,7 +598,7 @@
         .inv-table td {
             padding: 9px 10px;
             font-size: 12px;
-            border-bottom: 1px solid var(--border-light);
+            border: 1px solid var(--ink);
             color: var(--ink-soft);
         }
 
@@ -1905,7 +1906,7 @@
                 <!-- PJA MULTI-PARTICULARS PANEL -->
                 <div class="card" id="pjaParticularsPanel" style="display:none;">
                     <div class="card-header">
-                        <div class="card-title">📝 Particulars (PJA) <span class="card-title-badge">Multi-Row</span>
+                        <div class="card-title">📝 Particulars <span class="card-title-badge">Multi-Row</span>
                         </div>
                         <button type="button" class="add-preset-btn" onclick="pjaAddRow()"
                             style="padding:5px 12px; font-size:12px;">+ Add Row</button>
@@ -2086,7 +2087,7 @@
                                 <thead>
                                     <tr>
                                         <th>Particulars</th>
-                                        <th style="text-align:right;">Amount (₹)</th>
+                                        <th style="text-align:right;">Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody id="prevTbody">
@@ -2374,7 +2375,8 @@
                 signBox: "S/d—<strong>Authorised Signatory</strong><div style=\"margin-top:2px;font-size:10px;\">For Kashmira Rakesh Bhange</div>",
                 hasGstOptions: false,
                 hasQR: true,
-                prefix: "KB/"
+                prefix: "KB/",
+                hasMultiParticulars: true
             },
             TCP: {
                 name: "THE CORPORATE PROFESSIONALS",
@@ -2388,7 +2390,8 @@
                 signBox: "<strong>FOR THE CORPORATE PROFESSIONALS</strong><br><br>S/d—<br><strong>Authorised Signatory</strong>",
                 hasGstOptions: false,
                 hasQR: true,
-                prefix: "TCP/"
+                prefix: "TCP/",
+                hasMultiParticulars: true
             },
             PJA: {
                 name: "PINKUSH JAISWAL & ASSOCIATES",
@@ -2889,38 +2892,40 @@
                 container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--ink-mute);font-size:12px;">No particulars added yet. Click "+ Add Row" above.</div>`;
                 return;
             }
-            container.innerHTML = pjaRows.map((row, idx) => `
-        <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--surface2); position:relative;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:0.5px;">Particular ${idx + 1}</span>
-            <button onclick="pjaRemoveRow('${row.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;" title="Remove">✕</button>
-          </div>
-          <div style="margin-bottom:8px; position:relative;">
-            <label style="font-size:10px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Description</label>
-            <div style="display:flex; gap:6px; position:relative;">
-              <input type="text" class="form-control" value="${row.desc.replace(/"/g, '&quot;')}" placeholder="Service description…" style="font-size:13px; padding-right:35px;" oninput="pjaRowChanged('${row.id}','desc',this.value); dyncPjaDropdown(this,'${row.id}')" onfocus="openPjaDropdown('${row.id}', this)" onclick="openPjaDropdown('${row.id}', this)">
-              <button type="button" class="clear-btn" style="right:10px;" onclick="pjaSelectDesc('${row.id}', ''); this.previousElementSibling.value=''">✕</button>
-            </div>
-            <div id="pjaDrop_${row.id}" class="dropdown-list" style="position:absolute;left:0;right:0;z-index:250;margin-top:2px;"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div style="position:relative;">
-              <label style="font-size:10px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Amount (₹)</label>
-              <div style="position:relative; display:flex; align-items:center;">
-                <input type="number" class="form-control" value="${row.amt}" placeholder="0" min="0" style="font-size:14px;font-weight:600;width:100%;padding-right:35px;" oninput="pjaRowChanged('${row.id}','amt',this.value); updatePreview();">
-                <button type="button" class="clear-btn" style="right:10px;" onclick="pjaRowChanged('${row.id}','amt',0); this.previousElementSibling.value=0; updatePreview();">✕</button>
-              </div>
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Apply GST?</label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" style="width:18px;height:18px;accent-color:var(--gold);" ${row.applyGst ? 'checked' : ''} onchange="pjaRowChanged('${row.id}','applyGst',this.checked); updatePreview();">
-                <span style="font-size:12.5px;color:var(--ink);">Add GST on this amount</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      `).join('');
+            container.innerHTML = pjaRows.map((row, idx) => {
+                const bd = BRANDS[currentBrand];
+                return `
+                <div style="border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--surface2); position:relative;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-size:11px; font-weight:700; color:var(--gold); text-transform:uppercase; letter-spacing:0.5px;">Particular ${idx + 1}</span>
+                    <button onclick="pjaRemoveRow('${row.id}')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0;" title="Remove">✕</button>
+                  </div>
+                  <div style="margin-bottom:8px; position:relative;">
+                    <label style="font-size:10px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Description</label>
+                    <div style="display:flex; gap:6px; position:relative;">
+                      <input type="text" class="form-control" value="${row.desc.replace(/"/g, '&quot;')}" placeholder="Service description…" style="font-size:13px; padding-right:35px;" oninput="pjaRowChanged('${row.id}','desc',this.value); dyncPjaDropdown(this,'${row.id}')" onfocus="openPjaDropdown('${row.id}', this)" onclick="openPjaDropdown('${row.id}', this)">
+                      <button type="button" class="clear-btn" style="right:10px;" onclick="pjaSelectDesc('${row.id}', ''); this.previousElementSibling.value=''">✕</button>
+                    </div>
+                    <div id="pjaDrop_${row.id}" class="dropdown-list" style="position:absolute;left:0;right:0;z-index:250;margin-top:2px;"></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div style="position:relative;">
+                      <label style="font-size:10px;font-weight:600;color:var(--ink-mute);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Amount (₹)</label>
+                      <div style="position:relative; display:flex; align-items:center;">
+                        <input type="number" class="form-control" value="${row.amt}" placeholder="0" min="0" style="font-size:14px;font-weight:600;width:100%;padding-right:35px;" oninput="pjaRowChanged('${row.id}','amt',this.value); updatePreview();">
+                        <button type="button" class="clear-btn" style="right:10px;" onclick="pjaRowChanged('${row.id}','amt',0); this.previousElementSibling.value=0; updatePreview();">✕</button>
+                      </div>
+                    </div>
+                    <div style="${bd.hasGstOptions ? '' : 'display:none;'}">
+                      <label style="font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:0.7px;display:block;margin-bottom:4px;">Apply GST?</label>
+                      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                        <input type="checkbox" style="width:18px;height:18px;accent-color:var(--gold);" ${row.applyGst ? 'checked' : ''} onchange="pjaRowChanged('${row.id}','applyGst',this.checked); updatePreview();">
+                        <span style="font-size:12.5px;color:var(--ink);">Add GST on this amount</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              `}).join('');
         }
 
         function openPjaDropdown(rowId, inputEl) {
@@ -3032,7 +3037,7 @@
                 const { rows, gstRows, gstTotal, grandTotal } = getPjaPreviewData();
                 let html = '';
                 rows.forEach(r => {
-                    html += `<tr><td>${r.desc || '—'}</td><td style="text-align:right;">₹${r.amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+                    html += `<tr><td>${r.desc || '—'}</td><td style="text-align:right;">₹ ${r.amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                 });
                 // Group GST by type
                 let cgstTotal = 0, sgstTotal = 0, igstTotal = 0;
@@ -3041,13 +3046,13 @@
                     else if (g.type === 'igst') { igstTotal += g.amt; }
                 });
                 if (cgstTotal > 0) {
-                    html += `<tr><td>Add: Central Goods &amp; Services Tax (CGST) @9%</td><td style="text-align:right;">₹${cgstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
-                    html += `<tr><td>Add: State Goods &amp; Services Tax (SGST) @9%</td><td style="text-align:right;">₹${sgstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+                    html += `<tr><td>Add: Central Goods &amp; Services Tax (CGST) @9%</td><td style="text-align:right;">₹ ${cgstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+                    html += `<tr><td>Add: State Goods &amp; Services Tax (SGST) @9%</td><td style="text-align:right;">₹ ${sgstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                 }
                 if (igstTotal > 0) {
-                    html += `<tr><td>Add: Integrated Goods &amp; Services Tax (IGST) @18%</td><td style="text-align:right;">₹${igstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+                    html += `<tr><td>Add: Integrated Goods &amp; Services Tax (IGST) @18%</td><td style="text-align:right;">₹ ${igstTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                 }
-                html += `<tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+                html += `<tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹ ${grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                 tbodyObj.innerHTML = html;
                 document.getElementById('prevWords').textContent = '(' + n2w(grandTotal) + ')';
                 document.prevTotalAmt = grandTotal;
@@ -3062,25 +3067,25 @@
                     const gstAmt = amt * 0.09;
                     const total = amt + (gstAmt * 2);
                     tbodyObj.innerHTML = `
-          <tr><td>${part}</td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr><td>Add: Central Goods &amp; Services Tax (CGST) @9%</td><td style="text-align:right;">₹${gstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr><td>Add: State Goods &amp; Services Tax (SGST) @9%</td><td style="text-align:right;">₹${gstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+          <tr><td>${part}</td><td style="text-align:right;">₹ ${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr><td>Add: Central Goods &amp; Services Tax (CGST) @9%</td><td style="text-align:right;">₹ ${gstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr><td>Add: State Goods &amp; Services Tax (SGST) @9%</td><td style="text-align:right;">₹ ${gstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹ ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                     document.getElementById('prevWords').textContent = '(' + n2w(total) + ')';
                     document.prevTotalAmt = total;
                 } else if (gstType === 'igst' && amt > 0) {
                     const igstAmt = amt * 0.18;
                     const total = amt + igstAmt;
                     tbodyObj.innerHTML = `
-          <tr><td>${part}</td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr><td>Add: Integrated Goods &amp; Services Tax (IGST) @18%</td><td style="text-align:right;">₹${igstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+          <tr><td>${part}</td><td style="text-align:right;">₹ ${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr><td>Add: Integrated Goods &amp; Services Tax (IGST) @18%</td><td style="text-align:right;">₹ ${igstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹ ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                     document.getElementById('prevWords').textContent = '(' + n2w(total) + ')';
                     document.prevTotalAmt = total;
                 } else {
                     tbodyObj.innerHTML = `
-          <tr><td>${part}</td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+          <tr><td>${part}</td><td style="text-align:right;">₹ ${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr class="tot-row"><td><strong>TOTAL</strong></td><td style="text-align:right;">₹ ${amt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
                     document.getElementById('prevWords').textContent = amt ? '(' + n2w(amt) + ')' : 'Amount in words will appear here.';
                     document.prevTotalAmt = amt;
                 }
